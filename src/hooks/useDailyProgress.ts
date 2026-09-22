@@ -1,12 +1,12 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   getDailyFlags,
   getGoldenTomatoDates,
   getHolidayDates,
-  markGoldenTomato,
   setHoliday,
 } from '../repositories/dailyProgressRepository'
 import { localDateKey } from '../utils/dateUtils'
+import { GOLDEN_TOMATO_SETTLED_EVENT } from '../utils/goldenTomatoSettlement'
 
 export function useDailyProgress(date = localDateKey(new Date())) {
   const [flags, setFlags] = useState(() => getDailyFlags(date))
@@ -20,12 +20,23 @@ export function useDailyProgress(date = localDateKey(new Date())) {
     return next.holiday
   }, [date])
 
-  const awardGoldenTomato = useCallback(() => {
-    if (getDailyFlags(date).goldenTomato) return false
-    const next = markGoldenTomato(date)
-    setFlags(next)
-    setGoldenDates(getGoldenTomatoDates())
-    return true
+  const toggleHolidayForDate = useCallback(
+    (targetDate: string) => {
+      const next = setHoliday(targetDate, !getDailyFlags(targetDate).holiday)
+      if (targetDate === date) setFlags(next)
+      setHolidayDates(getHolidayDates())
+      return next.holiday
+    },
+    [date],
+  )
+
+  useEffect(() => {
+    const refresh = () => {
+      setFlags(getDailyFlags(date))
+      setGoldenDates(getGoldenTomatoDates())
+    }
+    window.addEventListener(GOLDEN_TOMATO_SETTLED_EVENT, refresh)
+    return () => window.removeEventListener(GOLDEN_TOMATO_SETTLED_EVENT, refresh)
   }, [date])
 
   return {
@@ -35,6 +46,6 @@ export function useDailyProgress(date = localDateKey(new Date())) {
     holidayDates,
     goldenDates,
     toggleHoliday,
-    awardGoldenTomato,
+    toggleHolidayForDate,
   }
 }

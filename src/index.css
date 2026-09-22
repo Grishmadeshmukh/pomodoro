@@ -87,8 +87,54 @@ body {
   animation: confetti-fall 0.85s ease-in forwards;
 }
 
+@keyframes tomato-splat {
+  0% {
+    transform: translate(-50%, -50%) scale(0.12) rotate(var(--splash-rotate));
+    opacity: 0;
+  }
+  55% {
+    transform: translate(-50%, -50%) scale(1.16) rotate(var(--splash-rotate));
+    opacity: 1;
+  }
+  80% {
+    transform: translate(-50%, -50%) scale(0.94) rotate(var(--splash-rotate));
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(var(--splash-rotate));
+    opacity: 1;
+  }
+}
+
+@keyframes tomato-splash-hold {
+  0%,
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.tomato-splash-layer {
+  animation: tomato-splash-hold 3.2s ease forwards;
+}
+
+.tomato-splash {
+  position: absolute;
+  display: block;
+  height: auto;
+  max-width: none;
+  transform: translate(-50%, -50%) scale(0) rotate(var(--splash-rotate));
+  opacity: 0;
+  filter: drop-shadow(0 8px 14px rgb(200 60 40 / 0.28));
+  animation: tomato-splat 0.55s cubic-bezier(0.22, 1.35, 0.36, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .confetti-piece {
+  .confetti-piece,
+  .tomato-splash,
+  .tomato-splash-layer {
     animation: none;
     display: none;
   }

@@ -20,6 +20,35 @@ function saveStore(store: PlanStore): PlanStore {
   return store
 }
 
+export function listStoredPlanDates(): string[] {
+  return Object.keys(loadStore())
+}
+
+export function getStoredPlan(date: string): PlanItem[] | null {
+  const items = loadStore()[date]
+  if (!items) return null
+  return [...items].sort((a, b) => a.order - b.order)
+}
+
+/** Copy linked task completion onto one day's plan. Other days stay unchanged. */
+export function syncLinkedTaskCompletion(
+  date: string,
+  tasks: { id: string; completed: boolean }[],
+): void {
+  const plan = getStoredPlan(date)
+  if (!plan) return
+  const completedById = new Map(tasks.map((task) => [task.id, task.completed]))
+  let changed = false
+  const next = plan.map((item) => {
+    if (!item.taskId || !completedById.has(item.taskId)) return item
+    const completed = completedById.get(item.taskId) === true
+    if (item.completed === completed) return item
+    changed = true
+    return { ...item, completed }
+  })
+  if (changed) savePlanForDate(date, next)
+}
+
 export function getOrCreatePlan(date: string): PlanItem[] {
   const store = loadStore()
   const current = date in store ? store[date] : undefined

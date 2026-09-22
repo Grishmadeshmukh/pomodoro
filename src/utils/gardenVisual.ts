@@ -1,4 +1,5 @@
 export const MINUTES_PER_HOUR_TREE = 60
+export const TOMATOES_PER_GARDEN_HOUR = 10
 export const HOUR_TREE_CYCLE = 6
 export const MAX_VISIBLE_HOUR_TREES = 18
 
@@ -14,6 +15,12 @@ const HOUR_SLOTS = [
 
 export function completedFocusHours(focusMinutes: number): number {
   return Math.max(0, Math.floor(focusMinutes / MINUTES_PER_HOUR_TREE))
+}
+
+/** 10 tomatoes plant hour 1 (a sapling). Weekend 2× tomatoes advance the garden twice as far. */
+export function gardenHoursFromTomatoes(tomatoes: number): number {
+  if (!Number.isFinite(tomatoes) || tomatoes <= 0) return 0
+  return Math.floor(tomatoes / TOMATOES_PER_GARDEN_HOUR)
 }
 
 export interface PlantedHourTree {

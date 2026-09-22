@@ -1,6 +1,5 @@
 import { StatsCard } from '../components/Common/StatsCard'
 import { MilestoneList } from '../components/Rewards/MilestoneList'
-import { Tomato } from '../components/Tomato/Tomato'
 import { TomatoGarden } from '../components/Tomato/TomatoGarden'
 import { useDailyProgress } from '../hooks/useDailyProgress'
 import { useFocusSessions } from '../hooks/useFocusSessions'
@@ -84,15 +83,6 @@ function HarvestBasket({
   )
 }
 
-const EMOTION_TOMATOES = [
-  { variant: 'smiling' as const, name: 'Smiling', note: 'Ready to focus' },
-  { variant: 'energised' as const, name: 'Energised', note: 'In the zone' },
-  { variant: 'sleepy' as const, name: 'Sleepy', note: 'Needs a pause' },
-  { variant: 'joyous' as const, name: 'Joyous', note: 'Session complete' },
-  { variant: 'crying' as const, name: 'Crying', note: 'Timer reset' },
-  { variant: 'angry' as const, name: 'Angry', note: 'Session ended early' },
-]
-
 export function GardenPage() {
   const { sessions } = useFocusSessions()
   const { tasks } = useTasks()
@@ -112,10 +102,7 @@ export function GardenPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <TomatoGarden
-        tomatoCount={totalTomatoes}
-        focusMinutes={totalFocusMinutes}
-      />
+      <TomatoGarden tomatoCount={totalTomatoes} />
 
       <p className="text-center text-sm text-text-muted">
         {formatMinutes(totalFocusMinutes)} focused time
@@ -138,26 +125,13 @@ export function GardenPage() {
       <section>
         <h2 className="mb-3 text-lg font-semibold text-text">Growth</h2>
         <div className="grid grid-cols-2 gap-3">
-          <StatsCard
-            label="Total focus"
-            value={formatMinutes(totalFocusMinutes)}
-            icon="⏱"
-          />
+          <StatsCard label="Total focus" value={formatMinutes(totalFocusMinutes)} />
           <StatsCard
             label="Average session"
             value={sessions.length === 0 ? '—' : formatMinutes(averageMinutes)}
-            icon="⏱"
           />
-          <StatsCard
-            label="Focus sessions"
-            value={String(sessions.length)}
-            icon="🎯"
-          />
-          <StatsCard
-            label="Tasks completed"
-            value={String(tasksCompleted)}
-            icon="🎯"
-          />
+          <StatsCard label="Focus sessions" value={String(sessions.length)} />
+          <StatsCard label="Tasks completed" value={String(tasksCompleted)} />
         </div>
       </section>
 
@@ -167,54 +141,17 @@ export function GardenPage() {
           <StatsCard
             label="Current streak"
             value={`${currentStreak} ${currentStreak === 1 ? 'day' : 'days'}`}
-            icon="🔥"
+            // icon="🔥"
           />
           <StatsCard
             label="Longest streak"
             value={`${longestStreak} ${longestStreak === 1 ? 'day' : 'days'}`}
-            icon="🏆"
+            // icon="🏆"
           />
         </div>
       </section>
 
       <MilestoneList milestones={harvestMilestones(totalTomatoes)} />
-
-      <section className="rounded-2xl bg-white px-5 py-4 shadow-sm">
-        <h2 className="text-lg font-semibold text-text">Tomato collection</h2>
-        <div className="mt-3 flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <Tomato size={32} alt="" />
-            <div>
-              <p className="font-medium text-text">Standard Tomato</p>
-              <p className="text-sm text-text-muted">
-                Grown from focused time · {formatTomatoCount(totalTomatoes)}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Tomato variant="golden" size={32} alt="" />
-            <div>
-              <p className="font-medium text-text">Golden Tomato</p>
-              <p className="text-sm text-text-muted">
-                {goldenDates.length === 0
-                  ? 'Finish today\'s plan to earn one'
-                  : formatTomatoCount(goldenDates.length)}
-              </p>
-            </div>
-          </div>
-          <div className="mt-1 grid grid-cols-2 gap-3">
-            {EMOTION_TOMATOES.map((tomato) => (
-              <div key={tomato.variant} className="flex items-center gap-2">
-                <Tomato variant={tomato.variant} size={28} alt="" />
-                <div>
-                  <p className="text-sm font-medium text-text">{tomato.name}</p>
-                  <p className="text-xs text-text-muted">{tomato.note}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   )
 }

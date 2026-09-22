@@ -27,9 +27,12 @@ export function groupFocusSessions(
   }))
 }
 
-function sumSessions(
-  sessions: FocusSession[],
-): { focusMinutes: number; tomatoes: number } {
+export type DayProgress = {
+  focusMinutes: number
+  tomatoes: number
+}
+
+function sumSessions(sessions: FocusSession[]): DayProgress {
   return sessions.reduce(
     (totals, session) => ({
       focusMinutes: totals.focusMinutes + session.durationMinutes,
@@ -37,6 +40,21 @@ function sumSessions(
     }),
     { focusMinutes: 0, tomatoes: 0 },
   )
+}
+
+export function progressByDate(
+  sessions: FocusSession[],
+): Map<string, DayProgress> {
+  const grouped = new Map<string, DayProgress>()
+  for (const session of sessions) {
+    const key = localDateKey(session.startedAt)
+    const current = grouped.get(key) ?? { focusMinutes: 0, tomatoes: 0 }
+    grouped.set(key, {
+      focusMinutes: current.focusMinutes + session.durationMinutes,
+      tomatoes: current.tomatoes + (session.tomatoesEarned ?? 0),
+    })
+  }
+  return grouped
 }
 
 export function sumTodayProgress(

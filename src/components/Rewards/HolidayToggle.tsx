@@ -15,7 +15,7 @@ export function HolidayToggle({ holiday, onToggle }: HolidayToggleProps) {
           : 'bg-white text-text-muted shadow-sm'
       }`}
     >
-      {holiday ? '🏖️ Holiday' : 'Mark holiday'}
+      {holiday ? 'Holiday' : 'Mark holiday'}
     </button>
   )
 }

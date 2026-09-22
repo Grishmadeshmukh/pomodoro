@@ -56,3 +56,44 @@ export function formatDeadlineLabel(
     overdue: deadline < localDateKey(now),
   }
 }
+
+export type CalendarCell = {
+  dateKey: string
+  day: number
+} | null
+
+export function shiftMonth(
+  year: number,
+  month: number,
+  delta: number,
+): { year: number; month: number } {
+  const date = new Date(year, month + delta, 1)
+  return { year: date.getFullYear(), month: date.getMonth() }
+}
+
+export function formatMonthTitle(year: number, month: number): string {
+  return new Date(year, month, 1).toLocaleDateString(undefined, {
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+export function monthGrid(year: number, month: number): CalendarCell[] {
+  const first = new Date(year, month, 1)
+  const daysInMonth = new Date(year, month + 1, 0).getDate()
+  const mondayOffset = (first.getDay() + 6) % 7
+  const cells: CalendarCell[] = Array.from({ length: mondayOffset }, () => null)
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    cells.push({
+      dateKey: localDateKey(new Date(year, month, day)),
+      day,
+    })
+  }
+
+  while (cells.length % 7 !== 0) {
+    cells.push(null)
+  }
+
+  return cells
+}

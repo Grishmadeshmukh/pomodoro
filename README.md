@@ -98,7 +98,8 @@ Focus on a Saturday or Sunday earns **2x tomatoes**.
 60 min on a weekend → 20 tomatoes
 ```
 
-- The multiplier applies to tomatoes only. Focus minutes are never doubled, so total focus time stays accurate.
+- The multiplier applies to tomatoes. Focus minutes are never doubled, so total focus time stays accurate.
+- Garden growth follows tomatoes: 10 tomatoes advance the plant one hour (a sapling at hour 1). A weekend hour is 20 tomatoes, so the garden grows two hours.
 - It is based on the date the session started, in the user's local time zone.
 - It is a bonus for choosing to work, not an expectation. Do not guilt users for resting on weekends.
 - Only weekends earn the bonus. Marking a day as a holiday (see Section 8) does not, otherwise the toggle could be used to double rewards every day.
@@ -1488,8 +1489,8 @@ Start a session to grow your first tomatoes.
 
 ## Phase 7 — History
 
-- [ ] Calendar
-- [ ] Tomatoes per day
+- [x] Calendar
+- [x] Tomatoes per day
 - [ ] Day detail
 - [ ] Focus session history
 - [ ] Task history
@@ -1597,6 +1598,7 @@ The source-of-truth reward rule is:
 ```text
 60 focus minutes = 10 tomatoes
 (20 tomatoes on a Saturday or Sunday)
+10 tomatoes = 1 hour of garden growth
 ```
 
 Do not invent alternative tomato rewards without updating this README.

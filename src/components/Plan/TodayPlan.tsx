@@ -80,7 +80,6 @@ export function TodayPlan({
 
       {resolved.length === 0 ? (
         <EmptyState
-          icon="📋"
           title="Nothing planned yet."
           description="Add a routine or a task to build today's plan."
           action={

@@ -25,7 +25,9 @@ export function GoldenTomatoCard({
         <div>
           <p className="text-sm text-text-muted">Golden Tomato</p>
           {earned ? (
-            <p className="mt-1 font-semibold text-gold">Earned for today</p>
+            <p className="mt-1 font-semibold text-gold">
+              All done. History keeps it if the day ends this way.
+            </p>
           ) : empty ? (
             <p className="mt-1 font-medium text-text">
               Add items to today's plan to unlock it

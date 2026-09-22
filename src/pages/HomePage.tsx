@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { TodayPlan } from '../components/Plan/TodayPlan'
 import { StatsBanner } from '../components/Common/StatsBanner'
 import { Confetti } from '../components/Rewards/Confetti'
 import { GoldenTomatoCard } from '../components/Rewards/GoldenTomato'
 import { RewardMetaBar } from '../components/Rewards/RewardMetaBar'
+import { TomatoSplash } from '../components/Rewards/TomatoSplash'
 import { TimerControls } from '../components/Timer/TimerControls'
 import { TimerDisplay } from '../components/Timer/TimerDisplay'
 import { Tomato } from '../components/Tomato/Tomato'
@@ -34,6 +35,7 @@ export function HomePage() {
   const timer = useTimer({ onSessionEnd: addSession })
   const daily = useDailyProgress(plan.date)
   const [celebrate, setCelebrate] = useState(false)
+  const [showSplash, setShowSplash] = useState(false)
 
   const now = new Date()
   const today = sumTodayProgress(sessions, now)
@@ -45,25 +47,34 @@ export function HomePage() {
   const todayTomatoes = today.tomatoes + liveTomatoes
   const todayFocusMinutes = today.focusMinutes + (timer.status === 'idle' ? 0 : liveMinutes)
   const completedCount = resolved.filter((item) => item.completed).length
-  const { holiday, goldenTomato, holidayDates, toggleHoliday, awardGoldenTomato } =
-    daily
+  const { holidayDates } = daily
   const streak = calculateCurrentStreak(sessions, holidayDates, now)
   const weekend = isWeekend(now)
   const multiplier = getRewardMultiplier(now)
   const planComplete = resolved.length > 0 && completedCount === resolved.length
+  const planWasComplete = useRef(planComplete)
 
   useEffect(() => {
-    if (!planComplete || goldenTomato) return
-    if (!awardGoldenTomato()) return
+    const justFinished = planComplete && !planWasComplete.current
+    planWasComplete.current = planComplete
+    if (!justFinished) return
     setCelebrate(true)
     const id = window.setTimeout(() => setCelebrate(false), 1200)
     return () => window.clearTimeout(id)
-  }, [awardGoldenTomato, goldenTomato, planComplete])
+  }, [planComplete])
 
   function celebrateTask(completed: boolean) {
     if (!completed) return
     setCelebrate(true)
     window.setTimeout(() => setCelebrate(false), 900)
+  }
+
+  function celebratePlanIfFinished(completed: boolean, id: string) {
+    if (!completed || resolved.length === 0) return
+    const unfinishedOthers = resolved.filter((item) => item.id !== id && !item.completed)
+    if (unfinishedOthers.length > 0) return
+    setShowSplash(true)
+    window.setTimeout(() => setShowSplash(false), 3300)
   }
 
   function handleToggleLocal(id: string) {
@@ -74,17 +85,20 @@ export function HomePage() {
       const completed = toggleTask(item.taskId)
       plan.setItemCompleted(id, completed)
       celebrateTask(completed)
+      celebratePlanIfFinished(completed, id)
       return completed
     }
 
     const completed = plan.toggleLocalItem(id)
     if (item.kind === 'task') celebrateTask(completed)
+    celebratePlanIfFinished(completed, id)
     return completed
   }
 
   return (
     <div className="flex flex-col gap-8">
       <Confetti active={celebrate} />
+      <TomatoSplash active={showSplash} />
       <section className="flex flex-col items-center gap-5">
         <StatsBanner
           items={[
@@ -96,25 +110,18 @@ export function HomePage() {
             {
               label: 'Focused',
               value: formatMinutes(todayFocusMinutes),
-              icon: '⏱',
             },
             {
               label: 'Planned',
               value: `${completedCount}/${resolved.length}`,
-              icon: '✓',
             },
             {
               label: 'Streak',
               value: `${streak}d`,
-              icon: '🔥',
             },
           ]}
         />
-        <RewardMetaBar
-          weekend={weekend}
-          holiday={holiday}
-          onToggleHoliday={toggleHoliday}
-        />
+        <RewardMetaBar weekend={weekend} />
         <TomatoCharacter state={timer.tomatoState} size={100} />
         <TimerDisplay
           timeDisplay={formatTimer(timer.remainingMs)}
@@ -160,15 +167,11 @@ export function HomePage() {
 
       <TomatoCounter tomatoes={todayTomatoes} goal={10} multiplier={multiplier} />
       <GoldenTomatoCard
-        earned={goldenTomato}
+        earned={planComplete}
         completedCount={completedCount}
         totalCount={resolved.length}
       />
-      <TomatoGarden
-        tomatoCount={todayTomatoes}
-        focusMinutes={todayFocusMinutes}
-        compact
-      />
+      <TomatoGarden tomatoCount={todayTomatoes} compact />
     </div>
   )
 }

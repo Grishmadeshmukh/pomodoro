@@ -27,7 +27,6 @@ export function TaskList({
   if (tasks.length === 0) {
     return (
       <EmptyState
-        icon="✅"
         title="No tasks yet."
         description="Create a task, then add it to today's plan."
         action={emptyAction}

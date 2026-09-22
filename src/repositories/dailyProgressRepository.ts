@@ -8,6 +8,8 @@ export interface DailyFlags {
   date: string
   holiday: boolean
   goldenTomato: boolean
+  /** Set once the calendar day has ended and the reward can no longer change. */
+  goldenSettled?: boolean
 }
 
 interface AbandonCount {
@@ -62,8 +64,16 @@ export function setHoliday(date: string, holiday: boolean): DailyFlags {
   return upsertFlags(date, { holiday })
 }
 
-export function markGoldenTomato(date: string): DailyFlags {
-  return upsertFlags(date, { goldenTomato: true })
+export function settleGoldenTomato(date: string, earned: boolean): DailyFlags {
+  return upsertFlags(date, { goldenTomato: earned, goldenSettled: true })
+}
+
+/** Drop a same-day award that was saved before the day finished. */
+export function revokeProvisionalGoldenTomato(date: string): boolean {
+  const current = getFlags().find((entry) => entry.date === date)
+  if (!current || current.goldenSettled || !current.goldenTomato) return false
+  upsertFlags(date, { goldenTomato: false })
+  return true
 }
 
 export function getAbandonCount(date: string): number {

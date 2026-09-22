@@ -1,24 +1,21 @@
 // import { useState } from 'react'
 import { ForestScene } from './ForestScene'
 // import { GardenHoursPreview } from './GardenHoursPreview'
-import { completedFocusHours } from '../../utils/gardenVisual'
+import { gardenHoursFromTomatoes } from '../../utils/gardenVisual'
 import { tomatoNoun } from '../../utils/tomatoCalculations'
 
 interface TomatoGardenProps {
   tomatoCount: number
-  focusMinutes: number
   compact?: boolean
 }
 
 export function TomatoGarden({
   tomatoCount,
-  focusMinutes,
   compact = false,
 }: TomatoGardenProps) {
-  const actualHours = completedFocusHours(focusMinutes)
   // const [previewHours, setPreviewHours] = useState<number | null>(null)
   // const hours = previewHours ?? actualHours
-  const hours = actualHours
+  const hours = gardenHoursFromTomatoes(tomatoCount)
 
   return (
     <section
@@ -44,13 +41,11 @@ export function TomatoGarden({
 
       {hours === 0 ? (
         <p className="mt-3 text-sm text-text-muted">
-          Focus for an hour to grow your first tree.
+          Grow 10 tomatoes to plant a sapling.
         </p>
       ) : (
         <p className="mt-3 text-sm text-text-muted">
-          {hours} {hours === 1 ? 'hour' : 'hours'}
-          {/* {previewHours !== null ? ' preview' : ' focused'} */}
-          {' focused'}
+          {hours} {hours === 1 ? 'hour' : 'hours'} of growth
         </p>
       )}
 

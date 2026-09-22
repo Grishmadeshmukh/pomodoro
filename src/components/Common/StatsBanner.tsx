@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 export interface StatsBannerItem {
   label: string
   value: string
-  icon: ReactNode
+  icon?: ReactNode
 }
 
 interface StatsBannerProps {
@@ -21,10 +21,15 @@ export function StatsBanner({ items }: StatsBannerProps) {
           key={item.label}
           className="flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1"
         >
-          <div className="flex items-center gap-1 text-text">
-            <span className="flex h-4 w-4 items-center justify-center text-sm" aria-hidden="true">
-              {item.icon}
-            </span>
+          <div className="flex w-full min-h-4 items-center justify-center gap-1 text-text">
+            {item.icon ? (
+              <span
+                className="flex h-4 w-4 shrink-0 items-center justify-center text-sm"
+                aria-hidden="true"
+              >
+                {item.icon}
+              </span>
+            ) : null}
             <span className="truncate text-sm font-semibold tabular-nums">
               {item.value}
             </span>

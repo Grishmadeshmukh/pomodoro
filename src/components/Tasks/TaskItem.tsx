@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Task, TaskPriority } from '../../types'
 import { formatDeadlineLabel } from '../../utils/dateUtils'
+import { hasOpenSubtasks } from '../../utils/taskCompletion'
 
 interface TaskItemProps {
   task: Task
@@ -37,6 +38,7 @@ export function TaskItem({
 }: TaskItemProps) {
   const deadline = task.deadline ? formatDeadlineLabel(task.deadline) : null
   const subtaskDone = task.subtasks.filter((subtask) => subtask.completed).length
+  const blocked = !task.completed && hasOpenSubtasks(task)
 
   return (
     <article className="rounded-2xl bg-white p-4 shadow-sm">
@@ -45,9 +47,17 @@ export function TaskItem({
           <input
             type="checkbox"
             checked={task.completed}
+            disabled={blocked}
             onChange={onToggle}
-            className="mt-1 h-4 w-4 rounded accent-tomato"
-            aria-label={`Mark "${task.title}" as complete`}
+            title={blocked ? 'Finish remaining subtasks first' : undefined}
+            className={`mt-1 h-4 w-4 rounded accent-tomato ${
+              blocked ? 'cursor-not-allowed opacity-40' : ''
+            }`}
+            aria-label={
+              blocked
+                ? `Finish remaining subtasks before marking "${task.title}" complete`
+                : `Mark "${task.title}" as complete`
+            }
           />
           <div className="min-w-0">
             <p

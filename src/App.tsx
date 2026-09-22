@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Layout } from './components/Layout/Layout'
+import { useGoldenTomatoSettlement } from './hooks/useGoldenTomatoSettlement'
 import { AboutPage } from './pages/AboutPage'
 import { GardenPage } from './pages/GardenPage'
 import { HistoryPage } from './pages/HistoryPage'
@@ -8,6 +9,7 @@ import { TasksPage } from './pages/TasksPage'
 import type { AppPage } from './types'
 
 function App() {
+  useGoldenTomatoSettlement()
   const [currentPage, setCurrentPage] = useState<AppPage>('home')
 
   return (

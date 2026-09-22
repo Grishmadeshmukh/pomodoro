@@ -6,6 +6,7 @@ import {
   upsertTask,
 } from '../repositories/taskRepository'
 import type { Task } from '../types'
+import { hasOpenSubtasks } from '../utils/taskCompletion'
 
 function sortTasks(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
@@ -29,6 +30,7 @@ export function useTasks() {
   const toggleTask = useCallback((id: string) => {
     const current = getTasks().find((task) => task.id === id)
     if (!current) return false
+    if (!current.completed && hasOpenSubtasks(current)) return false
     const completed = !current.completed
     saveTask({
       ...current,
