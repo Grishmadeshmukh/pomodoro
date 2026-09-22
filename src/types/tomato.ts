@@ -1,0 +1,10 @@
+export type TomatoState =
+  | 'idle'
+  | 'sleepy'
+  | 'focusing'
+  | 'energised'
+  | 'break'
+  | 'completed'
+  | 'celebration'
+  | 'abandoned'
+  | 'angry'

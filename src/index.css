@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+@theme {
+  /* --color-cream: #fff8f5; */
+  --color-bg: #fcffe8;
+  --color-cream-dark: #f5ede8;
+  --color-gold: #e8b923;
+  --color-tomato: #e85d4c;
+  --color-tomato-light: #ff8a7a;
+  --color-tomato-dark: #c94a3a;
+  --color-leaf: #6bbf59;
+  --color-leaf-dark: #4a9e3a;
+  --color-text: #3d3d3d;
+  --color-text-muted: #8a8a8a;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@keyframes bounce-gentle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes celebrate {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    transform: scale(1.08) rotate(-4deg);
+  }
+  75% {
+    transform: scale(1.08) rotate(4deg);
+  }
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 2s ease-in-out infinite;
+}
+
+.animate-celebrate {
+  animation: celebrate 0.6s ease-in-out;
+}
+
+.duration-wheel {
+  scrollbar-width: none;
+}
+
+.duration-wheel::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(280deg);
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -8px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  animation: confetti-fall 0.85s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece {
+    animation: none;
+    display: none;
+  }
+}
