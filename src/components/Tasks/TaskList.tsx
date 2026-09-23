@@ -6,23 +6,27 @@ import { TaskItem } from './TaskItem'
 interface TaskListProps {
   tasks: Task[]
   planTaskIds?: Set<string>
+  planSubtaskIds?: Set<string>
   emptyAction?: ReactNode
   onToggle: (id: string) => void
   onToggleSubtask: (taskId: string, subtaskId: string) => void
   onEdit: (task: Task) => void
   onDelete: (task: Task) => void
   onAddToPlan?: (task: Task) => void
+  onAddSubtaskToPlan?: (task: Task, subtaskId: string) => void
 }
 
 export function TaskList({
   tasks,
   planTaskIds,
+  planSubtaskIds,
   emptyAction,
   onToggle,
   onToggleSubtask,
   onEdit,
   onDelete,
   onAddToPlan,
+  onAddSubtaskToPlan,
 }: TaskListProps) {
   if (tasks.length === 0) {
     return (
@@ -41,11 +45,17 @@ export function TaskList({
           key={task.id}
           task={task}
           inPlan={planTaskIds?.has(task.id)}
+          plannedSubtaskIds={planSubtaskIds}
           onToggle={() => onToggle(task.id)}
           onToggleSubtask={(subtaskId) => onToggleSubtask(task.id, subtaskId)}
           onEdit={() => onEdit(task)}
           onDelete={() => onDelete(task)}
           onAddToPlan={onAddToPlan ? () => onAddToPlan(task) : undefined}
+          onAddSubtaskToPlan={
+            onAddSubtaskToPlan
+              ? (subtaskId) => onAddSubtaskToPlan(task, subtaskId)
+              : undefined
+          }
         />
       ))}
     </div>

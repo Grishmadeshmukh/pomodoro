@@ -30,7 +30,14 @@ export function settleElapsedGoldenTomatoes(today = localDateKey(new Date())): v
   const tasks = getTasks()
   syncLinkedTaskCompletion(
     today,
-    tasks.map((task) => ({ id: task.id, completed: task.completed })),
+    tasks.map((task) => ({
+      id: task.id,
+      completed: task.completed,
+      subtasks: task.subtasks.map((subtask) => ({
+        id: subtask.id,
+        completed: subtask.completed,
+      })),
+    })),
   )
 
   let changed = revokeProvisionalGoldenTomato(today)

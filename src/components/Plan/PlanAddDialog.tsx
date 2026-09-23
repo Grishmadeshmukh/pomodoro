@@ -8,16 +8,20 @@ type AddMode = 'choose' | 'new-task' | 'existing-task' | 'routine'
 interface PlanAddDialogProps {
   open: boolean
   tasks: Task[]
+  planTaskIds: Set<string>
+  planSubtaskIds: Set<string>
   onClose: () => void
   onAddRoutine: (preset: RoutinePreset) => void
   onAddCustomRoutine: (title: string) => void
-  onAddExistingTask: (task: Task) => void
+  onAddExistingTask: (task: Task, subtaskId?: string) => void
   onCreateTask: (title: string, addToTasks: boolean) => void
 }
 
 export function PlanAddDialog({
   open,
   tasks,
+  planTaskIds,
+  planSubtaskIds,
   onClose,
   onAddRoutine,
   onAddCustomRoutine,
@@ -178,20 +182,74 @@ export function PlanAddDialog({
                 No tasks yet. Create one or add a plan-only task.
               </li>
             ) : (
-              tasks.map((task) => (
-                <li key={task.id}>
-                  <button
-                    type="button"
-                    className="w-full rounded-2xl bg-white px-4 py-3 text-left text-sm font-medium text-text shadow-sm hover:ring-2 hover:ring-tomato/30"
-                    onClick={() => {
-                      onAddExistingTask(task)
-                      onClose()
-                    }}
-                  >
-                    {task.title}
-                  </button>
-                </li>
-              ))
+              tasks.map((task) => {
+                const wholeInPlan = planTaskIds.has(task.id)
+                if (task.subtasks.length === 0) {
+                  return (
+                    <li key={task.id}>
+                      <button
+                        type="button"
+                        className="w-full rounded-2xl bg-white px-4 py-3 text-left text-sm font-medium text-text shadow-sm hover:ring-2 hover:ring-tomato/30"
+                        onClick={() => {
+                          onAddExistingTask(task)
+                          onClose()
+                        }}
+                      >
+                        {task.title}
+                        {wholeInPlan ? (
+                          <span className="mt-0.5 block text-xs font-normal text-text-muted">
+                            In today&apos;s plan
+                          </span>
+                        ) : null}
+                      </button>
+                    </li>
+                  )
+                }
+
+                return (
+                  <li key={task.id} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+                    <p className="text-sm font-medium text-text">{task.title}</p>
+                    <div className="mt-2 flex flex-col gap-1">
+                      <button
+                        type="button"
+                        className="rounded-xl px-3 py-2 text-left text-sm text-text hover:bg-cream"
+                        onClick={() => {
+                          onAddExistingTask(task)
+                          onClose()
+                        }}
+                      >
+                        Add whole task
+                        {wholeInPlan ? (
+                          <span className="mt-0.5 block text-xs text-text-muted">
+                            In today&apos;s plan
+                          </span>
+                        ) : null}
+                      </button>
+                      {task.subtasks.map((subtask) => {
+                        const inPlan = planSubtaskIds.has(subtask.id)
+                        return (
+                          <button
+                            key={subtask.id}
+                            type="button"
+                            className="rounded-xl px-3 py-2 text-left text-sm text-text hover:bg-cream"
+                            onClick={() => {
+                              onAddExistingTask(task, subtask.id)
+                              onClose()
+                            }}
+                          >
+                            {subtask.title}
+                            {inPlan ? (
+                              <span className="mt-0.5 block text-xs text-text-muted">
+                                In today&apos;s plan
+                              </span>
+                            ) : null}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </li>
+                )
+              })
             )}
           </ul>
         ) : null}

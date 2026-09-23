@@ -9,6 +9,13 @@ import { reindexPlanItems } from '../utils/planUtils'
 
 const PLAN_KEY = 'pomodoro.v2.planItems'
 
+export const PLAN_CHANGED_EVENT = 'pomodoro:plan-changed'
+
+function notifyPlanChanged(): void {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(PLAN_CHANGED_EVENT))
+}
+
 type PlanStore = Record<string, PlanItem[]>
 
 function loadStore(): PlanStore {
@@ -30,23 +37,35 @@ export function getStoredPlan(date: string): PlanItem[] | null {
   return [...items].sort((a, b) => a.order - b.order)
 }
 
-/** Copy linked task completion onto one day's plan. Other days stay unchanged. */
-export function syncLinkedTaskCompletion(
-  date: string,
-  tasks: { id: string; completed: boolean }[],
-): void {
+type LinkedTask = {
+  id: string
+  completed: boolean
+  subtasks?: { id: string; completed: boolean }[]
+}
+
+/** Copy linked task and subtask completion onto one day's plan. Other days stay unchanged. */
+export function syncLinkedTaskCompletion(date: string, tasks: LinkedTask[]): void {
   const plan = getStoredPlan(date)
   if (!plan) return
-  const completedById = new Map(tasks.map((task) => [task.id, task.completed]))
+  const tasksById = new Map(tasks.map((task) => [task.id, task]))
   let changed = false
   const next = plan.map((item) => {
-    if (!item.taskId || !completedById.has(item.taskId)) return item
-    const completed = completedById.get(item.taskId) === true
+    if (!item.taskId) return item
+    const task = tasksById.get(item.taskId)
+    if (!task) return item
+    let completed = task.completed
+    if (item.subtaskId) {
+      const subtask = task.subtasks?.find((entry) => entry.id === item.subtaskId)
+      if (!subtask) return item
+      completed = subtask.completed
+    }
     if (item.completed === completed) return item
     changed = true
     return { ...item, completed }
   })
-  if (changed) savePlanForDate(date, next)
+  if (!changed) return
+  savePlanForDate(date, next)
+  notifyPlanChanged()
 }
 
 export function getOrCreatePlan(date: string): PlanItem[] {
@@ -84,7 +103,10 @@ export function savePlanForDate(date: string, items: PlanItem[]): PlanItem[] {
   return next
 }
 
-export function removePlanItemsForTask(taskId: string): void {
+export function removePlanItemsForTask(
+  taskId: string,
+  options?: { notify?: boolean },
+): void {
   const store = loadStore()
   let changed = false
 
@@ -96,5 +118,32 @@ export function removePlanItemsForTask(taskId: string): void {
     }
   }
 
-  if (changed) saveStore(store)
+  if (!changed) return
+  saveStore(store)
+  if (options?.notify !== false) notifyPlanChanged()
+}
+
+/** Drop plan rows whose subtask was removed from the task. */
+export function pruneMissingSubtasks(task: {
+  id: string
+  subtasks: { id: string }[]
+}): void {
+  const valid = new Set(task.subtasks.map((subtask) => subtask.id))
+  const store = loadStore()
+  let changed = false
+
+  for (const date of Object.keys(store)) {
+    const next = store[date].filter((item) => {
+      if (item.taskId !== task.id || !item.subtaskId) return true
+      return valid.has(item.subtaskId)
+    })
+    if (next.length !== store[date].length) {
+      store[date] = reindexPlanItems(next)
+      changed = true
+    }
+  }
+
+  if (!changed) return
+  saveStore(store)
+  notifyPlanChanged()
 }

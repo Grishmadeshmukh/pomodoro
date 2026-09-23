@@ -1,17 +1,20 @@
 import { useState } from 'react'
 import { Confetti } from '../components/Rewards/Confetti'
+import { CompletedTaskDialog } from '../components/Tasks/CompletedTaskDialog'
 import { TaskFormDialog } from '../components/Tasks/TaskFormDialog'
 import { TaskList } from '../components/Tasks/TaskList'
 import { useTasks } from '../hooks/useTasks'
 import { useTodayPlan } from '../hooks/useTodayPlan'
+import { getTasks } from '../repositories/taskRepository'
 import type { Task } from '../types'
 
 export function TasksPage() {
   const { tasks, saveTask, deleteTask, toggleTask, toggleSubtask } = useTasks()
-  const { planTaskIds, appendTask } = useTodayPlan()
+  const { planTaskIds, planSubtaskIds, appendTask, appendSubtask } = useTodayPlan()
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Task | null>(null)
   const [celebrate, setCelebrate] = useState(false)
+  const [finishedTask, setFinishedTask] = useState<Task | null>(null)
 
   function openCreate() {
     setEditing(null)
@@ -23,6 +26,7 @@ export function TasksPage() {
     if (completed) {
       setCelebrate(true)
       window.setTimeout(() => setCelebrate(false), 900)
+      setFinishedTask(tasks.find((task) => task.id === id) ?? null)
     }
   }
 
@@ -47,7 +51,7 @@ export function TasksPage() {
         <div>
           <h2 className="text-xl font-semibold text-text">Tasks</h2>
           <p className="mt-1 text-sm text-text-muted">
-            Create tasks, then add them to today&apos;s plan
+            Create tasks, then add a task or a subtask to today&apos;s plan
           </p>
         </div>
         {newTaskButton}
@@ -56,6 +60,7 @@ export function TasksPage() {
       <TaskList
         tasks={tasks}
         planTaskIds={planTaskIds}
+        planSubtaskIds={planSubtaskIds}
         emptyAction={newTaskButton}
         onToggle={handleToggle}
         onToggleSubtask={toggleSubtask}
@@ -65,6 +70,7 @@ export function TasksPage() {
         }}
         onDelete={handleDelete}
         onAddToPlan={appendTask}
+        onAddSubtaskToPlan={appendSubtask}
       />
 
       <TaskFormDialog
@@ -75,6 +81,23 @@ export function TasksPage() {
           setEditing(null)
         }}
         onSave={saveTask}
+      />
+
+      <CompletedTaskDialog
+        open={finishedTask !== null}
+        title={finishedTask?.title ?? ''}
+        onClose={() => setFinishedTask(null)}
+        onDelete={() => {
+          if (finishedTask) deleteTask(finishedTask.id)
+          setFinishedTask(null)
+        }}
+        onAddSubtasks={() => {
+          if (!finishedTask) return
+          const latest = getTasks().find((task) => task.id === finishedTask.id) ?? finishedTask
+          setEditing(latest)
+          setFormOpen(true)
+          setFinishedTask(null)
+        }}
       />
     </div>
   )

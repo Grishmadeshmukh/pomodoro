@@ -4,6 +4,7 @@ import { PlanRemoveButton } from './PlanRemoveButton'
 interface PlanLocalTaskRowProps {
   index: number
   title: string
+  detail?: string
   completed: boolean
   isUpNext: boolean
   canMoveUp: boolean
@@ -21,6 +22,7 @@ interface PlanLocalTaskRowProps {
 export function PlanLocalTaskRow({
   index,
   title,
+  detail,
   completed,
   isUpNext,
   canMoveUp,
@@ -49,6 +51,7 @@ export function PlanLocalTaskRow({
         aria-label={`Mark "${title}" as complete`}
       />
       <div className="min-w-0 flex-1">
+        {detail ? <p className="text-xs text-text-muted">{detail}</p> : null}
         <p
           className={`font-medium ${
             completed ? 'text-text-muted line-through' : 'text-text'

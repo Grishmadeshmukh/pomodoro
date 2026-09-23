@@ -1,12 +1,15 @@
-import { useCallback, useState } from 'react'
-import { removePlanItemsForTask } from '../repositories/planRepository'
+import { useCallback, useEffect, useState } from 'react'
+import {
+  PLAN_CHANGED_EVENT,
+  removePlanItemsForTask,
+} from '../repositories/planRepository'
 import {
   getTasks,
   removeTask,
   upsertTask,
 } from '../repositories/taskRepository'
 import type { Task } from '../types'
-import { hasOpenSubtasks } from '../utils/taskCompletion'
+import { hasOpenSubtasks, TASK_DELETE_AFTER_MS } from '../utils/taskCompletion'
 
 function sortTasks(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
@@ -21,6 +24,22 @@ export function useTasks() {
   const saveTask = useCallback((task: Task) => {
     setTasks(sortTasks(upsertTask(task)))
   }, [])
+
+  useEffect(() => {
+    let soonest = Infinity
+    const now = Date.now()
+    for (const task of tasks) {
+      if (!task.completedAt) continue
+      const due = new Date(task.completedAt).getTime() + TASK_DELETE_AFTER_MS
+      if (due < soonest) soonest = due
+    }
+    if (!Number.isFinite(soonest)) return
+    const id = window.setTimeout(() => {
+      setTasks(sortTasks(getTasks()))
+      window.dispatchEvent(new CustomEvent(PLAN_CHANGED_EVENT))
+    }, Math.max(0, soonest - now))
+    return () => window.clearTimeout(id)
+  }, [tasks])
 
   const deleteTask = useCallback((id: string) => {
     removePlanItemsForTask(id)
@@ -42,19 +61,22 @@ export function useTasks() {
 
   const toggleSubtask = useCallback((taskId: string, subtaskId: string) => {
     const current = getTasks().find((task) => task.id === taskId)
-    if (!current) return
+    if (!current) return false
+    const subtask = current.subtasks.find((item) => item.id === subtaskId)
+    if (!subtask) return false
+    const completed = !subtask.completed
     saveTask({
       ...current,
-      subtasks: current.subtasks.map((subtask) => {
-        if (subtask.id !== subtaskId) return subtask
-        const completed = !subtask.completed
+      subtasks: current.subtasks.map((item) => {
+        if (item.id !== subtaskId) return item
         return {
-          ...subtask,
+          ...item,
           completed,
           completedAt: completed ? new Date().toISOString() : undefined,
         }
       }),
     })
+    return completed
   }, [saveTask])
 
   return {

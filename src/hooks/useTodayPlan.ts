@@ -1,6 +1,8 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   getOrCreatePlan,
+  getStoredPlan,
+  PLAN_CHANGED_EVENT,
   savePlanForDate,
 } from '../repositories/planRepository'
 import {
@@ -25,13 +27,26 @@ function todayKey(): string {
 export function useTodayPlan() {
   const date = todayKey()
   const [items, setItems] = useState<PlanItem[]>(() => getOrCreatePlan(date))
+  const itemsRef = useRef(items)
+  itemsRef.current = items
 
   const persist = useCallback(
     (next: PlanItem[]) => {
+      itemsRef.current = next
       setItems(savePlanForDate(date, next))
     },
     [date],
   )
+
+  useEffect(() => {
+    function refresh() {
+      const next = getStoredPlan(date) ?? getOrCreatePlan(date)
+      itemsRef.current = next
+      setItems(next)
+    }
+    window.addEventListener(PLAN_CHANGED_EVENT, refresh)
+    return () => window.removeEventListener(PLAN_CHANGED_EVENT, refresh)
+  }, [date])
 
   const addRoutine = useCallback(
     (preset: RoutinePreset, atIndex: number) => {
@@ -59,22 +74,47 @@ export function useTodayPlan() {
 
   const addTask = useCallback(
     (task: Task, atIndex: number) => {
+      const current = itemsRef.current
       persist(
         insertPlanItem(
-          items,
+          current,
           {
             id: crypto.randomUUID(),
             date,
             kind: 'task',
             taskId: task.id,
             title: task.title,
-            completed: false,
+            completed: task.completed,
           },
           atIndex,
         ),
       )
     },
-    [date, items, persist],
+    [date, persist],
+  )
+
+  const addSubtask = useCallback(
+    (task: Task, subtaskId: string, atIndex: number) => {
+      const current = itemsRef.current
+      const subtask = task.subtasks.find((item) => item.id === subtaskId)
+      if (!subtask) return
+      persist(
+        insertPlanItem(
+          current,
+          {
+            id: crypto.randomUUID(),
+            date,
+            kind: 'task',
+            taskId: task.id,
+            subtaskId,
+            title: subtask.title,
+            completed: subtask.completed,
+          },
+          atIndex,
+        ),
+      )
+    },
+    [date, persist],
   )
 
   const addPlanOnlyTask = useCallback(
@@ -101,6 +141,13 @@ export function useTodayPlan() {
       addTask(task, items.length)
     },
     [addTask, items.length],
+  )
+
+  const appendSubtask = useCallback(
+    (task: Task, subtaskId: string) => {
+      addSubtask(task, subtaskId, items.length)
+    },
+    [addSubtask, items.length],
   )
 
   const moveItem = useCallback(
@@ -142,11 +189,23 @@ export function useTodayPlan() {
 
   const setItemCompleted = useCallback(
     (id: string, completed: boolean) => {
+      const current = itemsRef.current
+      const target = current.find((item) => item.id === id)
+      if (!target) return
       persist(
-        items.map((item) => (item.id === id ? { ...item, completed } : item)),
+        current.map((item) => {
+          const sameSubtask = Boolean(target.subtaskId) && item.subtaskId === target.subtaskId
+          const sameTask =
+            !target.subtaskId &&
+            Boolean(target.taskId) &&
+            item.taskId === target.taskId &&
+            !item.subtaskId
+          if (item.id === id || sameSubtask || sameTask) return { ...item, completed }
+          return item
+        }),
       )
     },
-    [items, persist],
+    [persist],
   )
 
   const renameItem = useCallback(
@@ -168,8 +227,14 @@ export function useTodayPlan() {
 
   const planTaskIds = new Set(
     items
-      .filter((item) => item.kind === 'task' && item.taskId)
+      .filter((item) => item.kind === 'task' && item.taskId && !item.subtaskId)
       .map((item) => item.taskId as string),
+  )
+
+  const planSubtaskIds = new Set(
+    items
+      .filter((item) => item.subtaskId)
+      .map((item) => item.subtaskId as string),
   )
 
   const routineKeys = new Set(
@@ -182,12 +247,15 @@ export function useTodayPlan() {
     date,
     items,
     planTaskIds,
+    planSubtaskIds,
     routineKeys,
     addRoutine,
     addCustomRoutine,
     addTask,
+    addSubtask,
     addPlanOnlyTask,
     appendTask,
+    appendSubtask,
     moveItem,
     removeItem,
     toggleLocalItem,

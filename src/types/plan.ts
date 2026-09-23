@@ -7,6 +7,8 @@ export interface PlanItem {
   order: number
   kind: PlanItemKind
   taskId?: string
+  /** Set when this plan row is one subtask, not the whole task. */
+  subtaskId?: string
   title?: string
   completed?: boolean
   routineKey?: string
@@ -20,6 +22,9 @@ export interface ResolvedPlanItem {
   title: string
   completed: boolean
   taskId?: string
+  subtaskId?: string
+  /** Parent task title when this row is a subtask. */
+  detail?: string
   routineKey?: string
   icon?: RoutineIcon
 }

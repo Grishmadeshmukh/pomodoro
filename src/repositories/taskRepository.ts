@@ -1,14 +1,33 @@
 import type { Task } from '../types'
 import { loadItem, saveItem } from '../storage/localStorage'
 import { localDateKey } from '../utils/dateUtils'
-import { withCompletableState } from '../utils/taskCompletion'
-import { syncLinkedTaskCompletion } from './planRepository'
+import { isTaskExpired, withCompletableState } from '../utils/taskCompletion'
+import {
+  pruneMissingSubtasks,
+  removePlanItemsForTask,
+  syncLinkedTaskCompletion,
+} from './planRepository'
 
 function mirrorTasksOntoTodayPlan(tasks: Task[]): void {
   syncLinkedTaskCompletion(
     localDateKey(new Date()),
-    tasks.map((task) => ({ id: task.id, completed: task.completed })),
+    tasks.map((task) => ({
+      id: task.id,
+      completed: task.completed,
+      subtasks: task.subtasks.map((subtask) => ({
+        id: subtask.id,
+        completed: subtask.completed,
+      })),
+    })),
   )
+}
+
+function dropExpiredTasks(tasks: Task[]): Task[] {
+  const expired = tasks.filter((task) => isTaskExpired(task))
+  if (expired.length === 0) return tasks
+  for (const task of expired) removePlanItemsForTask(task.id, { notify: false })
+  const expiredIds = new Set(expired.map((task) => task.id))
+  return saveTasks(tasks.filter((task) => !expiredIds.has(task.id)))
 }
 
 const TASKS_KEY = 'pomodoro.v1.tasks'
@@ -16,11 +35,12 @@ const TASKS_KEY = 'pomodoro.v1.tasks'
 export function getTasks(): Task[] {
   const tasks = loadItem<Task[]>(TASKS_KEY, [])
   const normalized = tasks.map(withCompletableState)
-  if (normalized.some((task, index) => task !== tasks[index])) {
+  const normalizedChanged = normalized.some((task, index) => task !== tasks[index])
+  if (normalizedChanged) {
     saveItem(TASKS_KEY, normalized)
     mirrorTasksOntoTodayPlan(normalized)
   }
-  return normalized
+  return dropExpiredTasks(normalized)
 }
 
 export function saveTasks(tasks: Task[]): Task[] {
@@ -36,6 +56,7 @@ export function upsertTask(task: Task): Task[] {
   if (index !== -1) next[index] = saved
   const stored = saveTasks(next)
   mirrorTasksOntoTodayPlan(stored)
+  pruneMissingSubtasks(saved)
   return stored
 }
 

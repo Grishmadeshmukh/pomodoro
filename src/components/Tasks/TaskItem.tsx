@@ -11,6 +11,8 @@ interface TaskItemProps {
   onEdit: () => void
   onDelete?: () => void
   onAddToPlan?: () => void
+  plannedSubtaskIds?: Set<string>
+  onAddSubtaskToPlan?: (subtaskId: string) => void
   extraActions?: ReactNode
 }
 
@@ -34,11 +36,16 @@ export function TaskItem({
   onEdit,
   onDelete,
   onAddToPlan,
+  plannedSubtaskIds,
+  onAddSubtaskToPlan,
   extraActions,
 }: TaskItemProps) {
   const deadline = task.deadline ? formatDeadlineLabel(task.deadline) : null
   const subtaskDone = task.subtasks.filter((subtask) => subtask.completed).length
   const blocked = !task.completed && hasOpenSubtasks(task)
+  const subtaskInPlan = (subtaskId: string) => plannedSubtaskIds?.has(subtaskId) ?? false
+  const showWholeAdd = Boolean(onAddToPlan)
+  const showSubtaskAdd = Boolean(onAddSubtaskToPlan)
 
   return (
     <article className="rounded-2xl bg-white p-4 shadow-sm">
@@ -112,7 +119,7 @@ export function TaskItem({
                 aria-label={`Mark subtask "${subtask.title}" as complete`}
               />
               <span
-                className={`text-sm ${
+                className={`min-w-0 flex-1 text-sm ${
                   subtask.completed
                     ? 'text-text-muted line-through'
                     : 'text-text'
@@ -120,19 +127,31 @@ export function TaskItem({
               >
                 {subtask.title}
               </span>
+              {subtaskInPlan(subtask.id) ? (
+                <span className="shrink-0 text-xs text-text-muted">In today&apos;s plan</span>
+              ) : null}
+              {showSubtaskAdd ? (
+                <button
+                  type="button"
+                  onClick={() => onAddSubtaskToPlan?.(subtask.id)}
+                  className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-tomato hover:text-tomato-dark"
+                >
+                  Add
+                </button>
+              ) : null}
             </li>
           ))}
         </ul>
       ) : null}
 
       <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-        {onAddToPlan ? (
+        {showWholeAdd ? (
           <button
             type="button"
             onClick={onAddToPlan}
             className="rounded-lg px-2 py-1 text-xs font-medium text-tomato hover:text-tomato-dark"
           >
-            Add to today&apos;s plan
+            {task.subtasks.length > 0 ? 'Add whole task' : "Add to today's plan"}
           </button>
         ) : null}
         {extraActions ?? (

@@ -22,6 +22,7 @@ interface TodayPlanProps {
   onAddRoutine: (preset: RoutinePreset, atIndex: number) => void
   onAddCustomRoutine: (title: string, atIndex: number) => void
   onAddTask: (task: Task, atIndex: number) => void
+  onAddSubtask: (task: Task, subtaskId: string, atIndex: number) => void
   onCreateListedTask: (task: Task, atIndex: number) => void
   onCreatePlanOnlyTask: (title: string, atIndex: number) => void
   onMoveItem: (fromIndex: number, toIndex: number) => void
@@ -41,6 +42,7 @@ export function TodayPlan({
   onAddRoutine,
   onAddCustomRoutine,
   onAddTask,
+  onAddSubtask,
   onCreateListedTask,
   onCreatePlanOnlyTask,
   onMoveItem,
@@ -61,6 +63,12 @@ export function TodayPlan({
   } | null>(null)
 
   const tasksById = new Map(tasks.map((task) => [task.id, task]))
+  const planTaskIds = new Set(
+    items.filter((item) => item.taskId && !item.subtaskId).map((item) => item.taskId as string),
+  )
+  const planSubtaskIds = new Set(
+    items.filter((item) => item.subtaskId).map((item) => item.subtaskId as string),
+  )
 
   function openAdd(index: number) {
     setInsertIndex(index)
@@ -113,7 +121,20 @@ export function TodayPlan({
 
             return (
               <div key={item.id}>
-                {item.kind === 'task' && item.taskId ? (
+                {item.kind === 'task' && item.taskId && item.subtaskId ? (
+                  <PlanLocalTaskRow
+                    {...shared}
+                    title={item.title}
+                    detail={item.detail}
+                    completed={item.completed}
+                    onToggle={() => onToggleLocal(item.id)}
+                    onEdit={() => {
+                      const task = tasksById.get(item.taskId!)
+                      if (task) setEditingTask(task)
+                    }}
+                    onStartFocus={onStartFocus}
+                  />
+                ) : item.kind === 'task' && item.taskId ? (
                   <PlanTaskRow
                     {...shared}
                     task={{
@@ -176,10 +197,15 @@ export function TodayPlan({
       <PlanAddDialog
         open={addOpen}
         tasks={tasks}
+        planTaskIds={planTaskIds}
+        planSubtaskIds={planSubtaskIds}
         onClose={() => setInsertIndex(null)}
         onAddRoutine={(preset) => onAddRoutine(preset, atIndex)}
         onAddCustomRoutine={(title) => onAddCustomRoutine(title, atIndex)}
-        onAddExistingTask={(task) => onAddTask(task, atIndex)}
+        onAddExistingTask={(task, subtaskId) => {
+          if (subtaskId) onAddSubtask(task, subtaskId, atIndex)
+          else onAddTask(task, atIndex)
+        }}
         onCreateTask={(title, addToTasks) => {
           if (addToTasks) {
             const taskId = crypto.randomUUID()

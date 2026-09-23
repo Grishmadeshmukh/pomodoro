@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { TodayPlan } from '../components/Plan/TodayPlan'
+import { CompletedTaskDialog } from '../components/Tasks/CompletedTaskDialog'
+import { TaskFormDialog } from '../components/Tasks/TaskFormDialog'
 import { StatsBanner } from '../components/Common/StatsBanner'
 import { Confetti } from '../components/Rewards/Confetti'
 import { GoldenTomatoCard } from '../components/Rewards/GoldenTomato'
@@ -16,6 +18,8 @@ import { useFocusSessions } from '../hooks/useFocusSessions'
 import { useTasks } from '../hooks/useTasks'
 import { useTimer } from '../hooks/useTimer'
 import { useTodayPlan } from '../hooks/useTodayPlan'
+import { getTasks } from '../repositories/taskRepository'
+import type { Task } from '../types'
 import { formatMinutes, formatTimer } from '../utils/dateUtils'
 import { getUpNextItem, resolvePlanItems } from '../utils/planUtils'
 import { sumTodayProgress } from '../utils/sessionHistory'
@@ -27,7 +31,7 @@ import {
 } from '../utils/tomatoCalculations'
 
 export function HomePage() {
-  const { tasks, saveTask, toggleTask, toggleSubtask } = useTasks()
+  const { tasks, saveTask, deleteTask, toggleTask, toggleSubtask } = useTasks()
   const plan = useTodayPlan()
   const resolved = resolvePlanItems(plan.items, tasks)
   const upNext = getUpNextItem(resolved)
@@ -36,6 +40,8 @@ export function HomePage() {
   const daily = useDailyProgress(plan.date)
   const [celebrate, setCelebrate] = useState(false)
   const [showSplash, setShowSplash] = useState(false)
+  const [finishedTask, setFinishedTask] = useState<Task | null>(null)
+  const [subtaskEditor, setSubtaskEditor] = useState<Task | null>(null)
 
   const now = new Date()
   const today = sumTodayProgress(sessions, now)
@@ -81,11 +87,22 @@ export function HomePage() {
     const item = plan.items.find((entry) => entry.id === id)
     if (!item) return false
 
+    if (item.taskId && item.subtaskId) {
+      const completed = toggleSubtask(item.taskId, item.subtaskId)
+      plan.setItemCompleted(id, completed)
+      celebrateTask(completed)
+      celebratePlanIfFinished(completed, id)
+      return completed
+    }
+
     if (item.taskId) {
       const completed = toggleTask(item.taskId)
       plan.setItemCompleted(id, completed)
       celebrateTask(completed)
       celebratePlanIfFinished(completed, id)
+      if (completed) {
+        setFinishedTask(tasks.find((task) => task.id === item.taskId) ?? null)
+      }
       return completed
     }
 
@@ -148,6 +165,7 @@ export function HomePage() {
         onAddRoutine={plan.addRoutine}
         onAddCustomRoutine={plan.addCustomRoutine}
         onAddTask={plan.addTask}
+        onAddSubtask={plan.addSubtask}
         onCreateListedTask={(task, atIndex) => {
           saveTask(task)
           plan.addTask(task, atIndex)
@@ -172,6 +190,31 @@ export function HomePage() {
         totalCount={resolved.length}
       />
       <TomatoGarden tomatoCount={todayTomatoes} compact />
+
+      <CompletedTaskDialog
+        open={finishedTask !== null}
+        title={finishedTask?.title ?? ''}
+        onClose={() => setFinishedTask(null)}
+        onDelete={() => {
+          if (finishedTask) deleteTask(finishedTask.id)
+          setFinishedTask(null)
+        }}
+        onAddSubtasks={() => {
+          if (!finishedTask) return
+          const latest = getTasks().find((task) => task.id === finishedTask.id) ?? finishedTask
+          setSubtaskEditor(latest)
+          setFinishedTask(null)
+        }}
+      />
+      <TaskFormDialog
+        open={subtaskEditor !== null}
+        task={subtaskEditor}
+        onClose={() => setSubtaskEditor(null)}
+        onSave={(task) => {
+          saveTask(task)
+          setSubtaskEditor(null)
+        }}
+      />
     </div>
   )
 }

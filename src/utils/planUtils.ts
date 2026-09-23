@@ -11,6 +11,19 @@ export function resolvePlanItems(
     .map((item) => {
       if (item.kind === 'task' && item.taskId) {
         const task = tasksById.get(item.taskId)
+        if (item.subtaskId) {
+          const subtask = task?.subtasks.find((entry) => entry.id === item.subtaskId)
+          return {
+            id: item.id,
+            order: item.order,
+            kind: item.kind,
+            taskId: item.taskId,
+            subtaskId: item.subtaskId,
+            title: subtask?.title ?? item.title ?? 'Subtask',
+            detail: task?.title,
+            completed: subtask?.completed ?? item.completed ?? false,
+          }
+        }
         return {
           id: item.id,
           order: item.order,
