@@ -6,6 +6,7 @@ import {
 import {
   getTasks,
   removeTask,
+  reorderTasks as persistTaskOrder,
   upsertTask,
 } from '../repositories/taskRepository'
 import type { Task } from '../types'
@@ -14,8 +15,14 @@ import { hasOpenSubtasks, TASK_DELETE_AFTER_MS } from '../utils/taskCompletion'
 function sortTasks(tasks: Task[]): Task[] {
   return [...tasks].sort((a, b) => {
     if (a.completed !== b.completed) return a.completed ? 1 : -1
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    return (a.order ?? 0) - (b.order ?? 0)
   })
+}
+
+function orderAtStart(tasks: Task[], completed: boolean, exceptId: string): number {
+  const peers = tasks.filter((task) => task.completed === completed && task.id !== exceptId)
+  if (peers.length === 0) return 0
+  return Math.min(...peers.map((task) => task.order ?? 0)) - 1
 }
 
 export function useTasks() {
@@ -55,6 +62,7 @@ export function useTasks() {
       ...current,
       completed,
       completedAt: completed ? new Date().toISOString() : undefined,
+      order: orderAtStart(getTasks(), completed, id),
     })
     return completed
   }, [saveTask])
@@ -79,11 +87,16 @@ export function useTasks() {
     return completed
   }, [saveTask])
 
+  const reorderTasks = useCallback((orderedIds: string[]) => {
+    setTasks(sortTasks(persistTaskOrder(orderedIds)))
+  }, [])
+
   return {
     tasks,
     saveTask,
     deleteTask,
     toggleTask,
     toggleSubtask,
+    reorderTasks,
   }
 }

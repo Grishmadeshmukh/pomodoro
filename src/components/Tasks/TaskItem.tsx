@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type PointerEvent, type ReactNode } from 'react'
 import type { Task, TaskPriority } from '../../types'
 import { formatDeadlineLabel } from '../../utils/dateUtils'
 import { hasOpenSubtasks } from '../../utils/taskCompletion'
@@ -14,6 +14,8 @@ interface TaskItemProps {
   plannedSubtaskIds?: Set<string>
   onAddSubtaskToPlan?: (subtaskId: string) => void
   extraActions?: ReactNode
+  onDragHandlePointerDown?: (event: PointerEvent<HTMLButtonElement>) => void
+  dragging?: boolean
 }
 
 const PRIORITY_STYLES: Record<TaskPriority, string> = {
@@ -39,9 +41,12 @@ export function TaskItem({
   plannedSubtaskIds,
   onAddSubtaskToPlan,
   extraActions,
+  onDragHandlePointerDown,
+  dragging = false,
 }: TaskItemProps) {
   const deadline = task.deadline ? formatDeadlineLabel(task.deadline) : null
   const subtaskDone = task.subtasks.filter((subtask) => subtask.completed).length
+  const [subtasksOpen, setSubtasksOpen] = useState(false)
   const blocked = !task.completed && hasOpenSubtasks(task)
   const subtaskInPlan = (subtaskId: string) => plannedSubtaskIds?.has(subtaskId) ?? false
   const showWholeAdd = Boolean(onAddToPlan)
@@ -51,6 +56,18 @@ export function TaskItem({
     <article className="rounded-2xl bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
+          {onDragHandlePointerDown ? (
+            <button
+              type="button"
+              aria-label={`Reorder "${task.title}"`}
+              onPointerDown={onDragHandlePointerDown}
+              className={`mt-0.5 touch-none rounded p-1 text-text-muted hover:bg-cream-dark ${
+                dragging ? 'cursor-grabbing' : 'cursor-grab'
+              }`}
+            >
+              <Grip />
+            </button>
+          ) : null}
           <input
             type="checkbox"
             checked={task.completed}
@@ -97,17 +114,27 @@ export function TaskItem({
             {PRIORITY_LABELS[task.priority]}
           </span>
           {task.subtasks.length > 0 ? (
-            <span
-              className="text-xs tabular-nums text-text-muted"
-              aria-label={`${subtaskDone} of ${task.subtasks.length} subtasks complete`}
+            <button
+              type="button"
+              onClick={() => setSubtasksOpen((open) => !open)}
+              aria-expanded={subtasksOpen}
+              aria-label={
+                subtasksOpen
+                  ? `Hide subtasks for "${task.title}"`
+                  : `Show ${task.subtasks.length} subtasks for "${task.title}"`
+              }
+              className="flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-xs tabular-nums text-text-muted hover:bg-cream-dark hover:text-text"
             >
-              {subtaskDone}/{task.subtasks.length}
-            </span>
+              <span aria-hidden="true">
+                {subtaskDone}/{task.subtasks.length}
+              </span>
+              <Chevron open={subtasksOpen} />
+            </button>
           ) : null}
         </div>
       </div>
 
-      {task.subtasks.length > 0 ? (
+      {subtasksOpen && task.subtasks.length > 0 ? (
         <ul className="mt-3 ml-7 flex flex-col gap-1.5 border-l-2 border-cream-dark pl-4">
           {task.subtasks.map((subtask) => (
             <li key={subtask.id} className="flex items-center gap-2">
@@ -176,5 +203,31 @@ export function TaskItem({
         )}
       </div>
     </article>
+  )
+}
+
+function Grip() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="currentColor">
+      <circle cx="7" cy="5" r="1.3" />
+      <circle cx="13" cy="5" r="1.3" />
+      <circle cx="7" cy="10" r="1.3" />
+      <circle cx="13" cy="10" r="1.3" />
+      <circle cx="7" cy="15" r="1.3" />
+      <circle cx="13" cy="15" r="1.3" />
+    </svg>
+  )
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-90' : ''}`}
+      fill="currentColor"
+    >
+      <path d="M7.2 4.5a.75.75 0 0 1 1.06 0l5 5a.75.75 0 0 1 0 1.06l-5 5a.75.75 0 1 1-1.06-1.06L11.67 10 7.2 5.56a.75.75 0 0 1 0-1.06Z" />
+    </svg>
   )
 }

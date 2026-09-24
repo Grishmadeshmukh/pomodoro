@@ -8,6 +8,7 @@ import {
 import {
   addSavedRoutine,
   removeSavedRoutine,
+  updateSavedRoutine,
 } from '../repositories/savedRoutineRepository'
 import type { PlanItem, Task } from '../types'
 import { createRoutinePlanItem } from '../utils/createPlanItems'
@@ -210,17 +211,30 @@ export function useTodayPlan() {
 
   const renameItem = useCallback(
     (id: string, title: string) => {
+      const trimmed = title.trim()
+      const current = items.find((item) => item.id === id)
       persist(
         items.map((item) =>
           item.id === id
             ? {
                 ...item,
-                title: title.trim(),
-                icon: item.kind === 'routine' ? inferRoutineIcon(title) ?? item.icon : item.icon,
+                title: trimmed,
+                icon: item.kind === 'routine' ? inferRoutineIcon(trimmed) ?? item.icon : item.icon,
               }
             : item,
         ),
       )
+      if (
+        current?.kind === 'routine' &&
+        current.routineKey &&
+        !isPermanentRoutine(current.routineKey)
+      ) {
+        updateSavedRoutine({
+          key: current.routineKey,
+          title: trimmed,
+          icon: inferRoutineIcon(trimmed) ?? current.icon,
+        })
+      }
     },
     [items, persist],
   )

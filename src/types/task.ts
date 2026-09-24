@@ -18,4 +18,5 @@ export interface Task {
   subtasks: Subtask[]
   createdAt: string
   completedAt?: string
+  order?: number
 }

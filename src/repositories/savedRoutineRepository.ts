@@ -18,6 +18,14 @@ export function addSavedRoutine(routine: RoutinePreset): RoutinePreset[] {
   return saveSavedRoutines([...current, routine])
 }
 
+export function updateSavedRoutine(routine: RoutinePreset): RoutinePreset[] {
+  const current = getSavedRoutines()
+  if (!current.some((item) => item.key === routine.key)) return current
+  return saveSavedRoutines(
+    current.map((item) => (item.key === routine.key ? { ...item, ...routine } : item)),
+  )
+}
+
 export function removeSavedRoutine(key: string): RoutinePreset[] {
   return saveSavedRoutines(getSavedRoutines().filter((item) => item.key !== key))
 }

@@ -199,6 +199,13 @@ export function TodayPlan({
         tasks={tasks}
         planTaskIds={planTaskIds}
         planSubtaskIds={planSubtaskIds}
+        routineKeys={
+          new Set(
+            items
+              .filter((item) => item.routineKey)
+              .map((item) => item.routineKey as string),
+          )
+        }
         onClose={() => setInsertIndex(null)}
         onAddRoutine={(preset) => onAddRoutine(preset, atIndex)}
         onAddCustomRoutine={(title) => onAddCustomRoutine(title, atIndex)}

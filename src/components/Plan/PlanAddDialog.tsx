@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { getSavedRoutines } from '../../repositories/savedRoutineRepository'
 import type { Task } from '../../types'
 import { ADDABLE_ROUTINES, type RoutinePreset } from '../../utils/defaultRoutine'
 import { RoutineIconImage } from './RoutineIconImage'
@@ -10,6 +11,7 @@ interface PlanAddDialogProps {
   tasks: Task[]
   planTaskIds: Set<string>
   planSubtaskIds: Set<string>
+  routineKeys: Set<string>
   onClose: () => void
   onAddRoutine: (preset: RoutinePreset) => void
   onAddCustomRoutine: (title: string) => void
@@ -22,6 +24,7 @@ export function PlanAddDialog({
   tasks,
   planTaskIds,
   planSubtaskIds,
+  routineKeys,
   onClose,
   onAddRoutine,
   onAddCustomRoutine,
@@ -32,6 +35,15 @@ export function PlanAddDialog({
   const [mode, setMode] = useState<AddMode>('choose')
   const [title, setTitle] = useState('')
   const [addToTasks, setAddToTasks] = useState(false)
+  const [savedRoutines, setSavedRoutines] = useState<RoutinePreset[]>([])
+  const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set())
+
+  const routineChoices = [
+    ...ADDABLE_ROUTINES,
+    ...savedRoutines.filter(
+      (routine) => !ADDABLE_ROUTINES.some((preset) => preset.key === routine.key),
+    ),
+  ]
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -40,6 +52,8 @@ export function PlanAddDialog({
       setMode('choose')
       setTitle('')
       setAddToTasks(false)
+      setSavedRoutines(getSavedRoutines())
+      setExpandedTaskIds(new Set())
       if (!dialog.open) dialog.showModal()
     }
     if (!open && dialog.open) dialog.close()
@@ -142,7 +156,7 @@ export function PlanAddDialog({
         {mode === 'routine' ? (
           <>
             <div className="mt-5 grid grid-cols-2 gap-2">
-              {ADDABLE_ROUTINES.map((preset) => (
+              {routineChoices.map((preset) => (
                 <button
                   key={preset.key}
                   type="button"
@@ -154,6 +168,11 @@ export function PlanAddDialog({
                 >
                   {preset.icon ? <RoutineIconImage icon={preset.icon} size={44} /> : null}
                   {preset.title}
+                  {routineKeys.has(preset.key) ? (
+                    <span className="-mt-1 text-xs font-normal text-text-muted">
+                      In today&apos;s plan
+                    </span>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -206,47 +225,71 @@ export function PlanAddDialog({
                   )
                 }
 
+                const expanded = expandedTaskIds.has(task.id)
                 return (
-                  <li key={task.id} className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-                    <p className="text-sm font-medium text-text">{task.title}</p>
-                    <div className="mt-2 flex flex-col gap-1">
+                  <li key={task.id} className="rounded-2xl bg-white shadow-sm">
+                    <div className="flex items-stretch">
                       <button
                         type="button"
-                        className="rounded-xl px-3 py-2 text-left text-sm text-text hover:bg-cream"
+                        className="min-w-0 flex-1 rounded-l-2xl px-4 py-3 text-left text-sm font-medium text-text hover:bg-cream"
                         onClick={() => {
                           onAddExistingTask(task)
                           onClose()
                         }}
                       >
-                        Add whole task
+                        {task.title}
                         {wholeInPlan ? (
-                          <span className="mt-0.5 block text-xs text-text-muted">
+                          <span className="mt-0.5 block text-xs font-normal text-text-muted">
                             In today&apos;s plan
                           </span>
                         ) : null}
                       </button>
-                      {task.subtasks.map((subtask) => {
-                        const inPlan = planSubtaskIds.has(subtask.id)
-                        return (
-                          <button
-                            key={subtask.id}
-                            type="button"
-                            className="rounded-xl px-3 py-2 text-left text-sm text-text hover:bg-cream"
-                            onClick={() => {
-                              onAddExistingTask(task, subtask.id)
-                              onClose()
-                            }}
-                          >
-                            {subtask.title}
-                            {inPlan ? (
-                              <span className="mt-0.5 block text-xs text-text-muted">
-                                In today&apos;s plan
-                              </span>
-                            ) : null}
-                          </button>
-                        )
-                      })}
+                      <button
+                        type="button"
+                        aria-expanded={expanded}
+                        aria-label={
+                          expanded
+                            ? `Hide subtasks for "${task.title}"`
+                            : `Show subtasks for "${task.title}"`
+                        }
+                        className="shrink-0 rounded-r-2xl px-3 text-text-muted hover:bg-cream hover:text-text"
+                        onClick={() => {
+                          setExpandedTaskIds((current) => {
+                            const next = new Set(current)
+                            if (next.has(task.id)) next.delete(task.id)
+                            else next.add(task.id)
+                            return next
+                          })
+                        }}
+                      >
+                        <Chevron open={expanded} />
+                      </button>
                     </div>
+                    {expanded ? (
+                      <div className="flex flex-col gap-1 border-t border-cream-dark px-2 py-2">
+                        {task.subtasks.map((subtask) => {
+                          const inPlan = planSubtaskIds.has(subtask.id)
+                          return (
+                            <button
+                              key={subtask.id}
+                              type="button"
+                              className="rounded-xl px-3 py-2 text-left text-sm text-text hover:bg-cream"
+                              onClick={() => {
+                                onAddExistingTask(task, subtask.id)
+                                onClose()
+                              }}
+                            >
+                              {subtask.title}
+                              {inPlan ? (
+                                <span className="mt-0.5 block text-xs text-text-muted">
+                                  In today&apos;s plan
+                                </span>
+                              ) : null}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : null}
                   </li>
                 )
               })
@@ -255,5 +298,18 @@ export function PlanAddDialog({
         ) : null}
       </form>
     </dialog>
+  )
+}
+
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      className={`h-4 w-4 transition-transform ${open ? 'rotate-90' : ''}`}
+      fill="currentColor"
+    >
+      <path d="M7.2 4.5a.75.75 0 0 1 1.06 0l5 5a.75.75 0 0 1 0 1.06l-5 5a.75.75 0 1 1-1.06-1.06L11.67 10 7.2 5.56a.75.75 0 0 1 0-1.06Z" />
+    </svg>
   )
 }

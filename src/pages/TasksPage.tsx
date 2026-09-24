@@ -9,7 +9,7 @@ import { getTasks } from '../repositories/taskRepository'
 import type { Task } from '../types'
 
 export function TasksPage() {
-  const { tasks, saveTask, deleteTask, toggleTask, toggleSubtask } = useTasks()
+  const { tasks, saveTask, deleteTask, toggleTask, toggleSubtask, reorderTasks } = useTasks()
   const { planTaskIds, planSubtaskIds, appendTask, appendSubtask } = useTodayPlan()
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<Task | null>(null)
@@ -51,7 +51,7 @@ export function TasksPage() {
         <div>
           <h2 className="text-xl font-semibold text-text">Tasks</h2>
           <p className="mt-1 text-sm text-text-muted">
-            Create tasks, then add a task or a subtask to today&apos;s plan
+            Drag the handle to reorder. Add a task or a subtask to today&apos;s plan.
           </p>
         </div>
         {newTaskButton}
@@ -71,6 +71,7 @@ export function TasksPage() {
         onDelete={handleDelete}
         onAddToPlan={appendTask}
         onAddSubtaskToPlan={appendSubtask}
+        onReorder={reorderTasks}
       />
 
       <TaskFormDialog
