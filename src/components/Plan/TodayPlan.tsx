@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { PlanItem, ResolvedPlanItem, Task } from '../../types'
 import {
   isPermanentPlanItem,
@@ -13,6 +13,13 @@ import { PlanRemoveDialog } from './PlanRemoveDialog'
 import { PlanRoutineRow } from './PlanRoutineRow'
 import { PlanTaskRow } from './PlanTaskRow'
 import { RoutineEditDialog } from './RoutineEditDialog'
+
+interface DragState {
+  from: number
+  to: number
+  dy: number
+  height: number
+}
 
 interface TodayPlanProps {
   items: PlanItem[]
@@ -54,6 +61,9 @@ export function TodayPlan({
   onStartFocus,
 }: TodayPlanProps) {
   const completedCount = resolved.filter((item) => item.completed).length
+  const listRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<DragState | null>(null)
+  const [drag, setDrag] = useState<DragState | null>(null)
   const [insertIndex, setInsertIndex] = useState<number | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [editingLocal, setEditingLocal] = useState<PlanItem | null>(null)
@@ -72,6 +82,60 @@ export function TodayPlan({
 
   function openAdd(index: number) {
     setInsertIndex(index)
+  }
+
+  function shift(index: number): number {
+    if (!drag || index === drag.from) return drag?.from === index ? drag.dy : 0
+    if (drag.to > drag.from && index > drag.from && index <= drag.to) return -drag.height
+    if (drag.to < drag.from && index >= drag.to && index < drag.from) return drag.height
+    return 0
+  }
+
+  function beginDrag(index: number, clientY: number) {
+    const card = listRef.current?.querySelectorAll<HTMLElement>('[data-plan-id]')[index]
+    const height = card?.getBoundingClientRect().height ?? 0
+    const mids = Array.from(
+      listRef.current?.querySelectorAll<HTMLElement>('[data-plan-id]') ?? [],
+    ).map((el) => {
+      const rect = el.getBoundingClientRect()
+      return rect.top + rect.height / 2
+    })
+    const start: DragState = { from: index, to: index, dy: 0, height }
+    dragRef.current = start
+    setDrag(start)
+
+    function onMove(event: PointerEvent) {
+      const dy = event.clientY - clientY
+      const center = mids[index] + dy
+      let to = index
+      if (dy > 0) {
+        for (let i = index + 1; i < resolved.length; i++) {
+          if (center > mids[i]) to = i
+          else break
+        }
+      } else {
+        for (let i = index - 1; i >= 0; i--) {
+          if (center < mids[i]) to = i
+          else break
+        }
+      }
+      const next = { from: index, to, dy, height }
+      dragRef.current = next
+      setDrag(next)
+    }
+
+    function onUp() {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      const current = dragRef.current
+      dragRef.current = null
+      setDrag(null)
+      if (!current || current.to === current.from) return
+      onMoveItem(current.from, current.to)
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
   }
 
   const addOpen = insertIndex !== null
@@ -101,7 +165,7 @@ export function TodayPlan({
           }
         />
       ) : (
-        <div>
+        <div ref={listRef} className={drag ? 'select-none' : undefined}>
           <PlanInsertPoint onClick={() => openAdd(0)} />
           {resolved.map((item, index) => {
             const source = items[index]
@@ -119,8 +183,35 @@ export function TodayPlan({
                 setPendingRemove({ id: item.id, title: item.title }),
             }
 
+            const offset = shift(index)
+            const dragging = drag?.from === index
+
             return (
-              <div key={item.id}>
+              <div
+                key={item.id}
+                data-plan-id={item.id}
+                className={dragging ? 'relative z-10' : 'relative'}
+                style={{
+                  transform: offset ? `translateY(${offset}px)` : undefined,
+                  transition: dragging ? undefined : 'transform 150ms ease',
+                }}
+              >
+                <div className="flex items-start gap-1">
+                  <button
+                    type="button"
+                    aria-label={`Reorder "${item.title}"`}
+                    onPointerDown={(event: ReactPointerEvent<HTMLButtonElement>) => {
+                      if (event.button !== 0) return
+                      event.preventDefault()
+                      beginDrag(index, event.clientY)
+                    }}
+                    className={`mt-3 touch-none rounded p-1 text-text-muted hover:bg-cream-dark ${
+                      dragging ? 'cursor-grabbing' : 'cursor-grab'
+                    }`}
+                  >
+                    <Grip />
+                  </button>
+                  <div className="min-w-0 flex-1">
                 {item.kind === 'task' && item.taskId && item.subtaskId ? (
                   <PlanLocalTaskRow
                     {...shared}
@@ -177,6 +268,8 @@ export function TodayPlan({
                     onEdit={() => setEditingLocal(source)}
                   />
                 )}
+                  </div>
+                </div>
                 <PlanInsertPoint onClick={() => openAdd(index + 1)} />
               </div>
             )
@@ -261,5 +354,18 @@ export function TodayPlan({
         }}
       />
     </section>
+  )
+}
+
+function Grip() {
+  return (
+    <svg viewBox="0 0 20 20" aria-hidden="true" className="h-4 w-4" fill="currentColor">
+      <circle cx="7" cy="5" r="1.3" />
+      <circle cx="13" cy="5" r="1.3" />
+      <circle cx="7" cy="10" r="1.3" />
+      <circle cx="13" cy="10" r="1.3" />
+      <circle cx="7" cy="15" r="1.3" />
+      <circle cx="13" cy="15" r="1.3" />
+    </svg>
   )
 }
