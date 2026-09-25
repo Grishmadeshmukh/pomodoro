@@ -228,43 +228,29 @@ export function PlanAddDialog({
                 const expanded = expandedTaskIds.has(task.id)
                 return (
                   <li key={task.id} className="rounded-2xl bg-white shadow-sm">
-                    <div className="flex items-stretch">
-                      <button
-                        type="button"
-                        className="min-w-0 flex-1 rounded-l-2xl px-4 py-3 text-left text-sm font-medium text-text hover:bg-cream"
-                        onClick={() => {
-                          onAddExistingTask(task)
-                          onClose()
-                        }}
-                      >
+                    <button
+                      type="button"
+                      aria-expanded={expanded}
+                      className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-left text-sm font-medium text-text hover:bg-cream"
+                      onClick={() => {
+                        setExpandedTaskIds((current) => {
+                          const next = new Set(current)
+                          if (next.has(task.id)) next.delete(task.id)
+                          else next.add(task.id)
+                          return next
+                        })
+                      }}
+                    >
+                      <span className="min-w-0 flex-1">
                         {task.title}
-                        {wholeInPlan ? (
-                          <span className="mt-0.5 block text-xs font-normal text-text-muted">
-                            In today&apos;s plan
-                          </span>
-                        ) : null}
-                      </button>
-                      <button
-                        type="button"
-                        aria-expanded={expanded}
-                        aria-label={
-                          expanded
-                            ? `Hide subtasks for "${task.title}"`
-                            : `Show subtasks for "${task.title}"`
-                        }
-                        className="shrink-0 rounded-r-2xl px-3 text-text-muted hover:bg-cream hover:text-text"
-                        onClick={() => {
-                          setExpandedTaskIds((current) => {
-                            const next = new Set(current)
-                            if (next.has(task.id)) next.delete(task.id)
-                            else next.add(task.id)
-                            return next
-                          })
-                        }}
-                      >
-                        <Chevron open={expanded} />
-                      </button>
-                    </div>
+                        <span className="mt-0.5 block text-xs font-normal text-text-muted">
+                          {wholeInPlan
+                            ? "Whole task is in today's plan"
+                            : `${task.subtasks.length} subtasks`}
+                        </span>
+                      </span>
+                      <Chevron open={expanded} />
+                    </button>
                     {expanded ? (
                       <div className="flex flex-col gap-1 border-t border-cream-dark px-2 py-2">
                         {task.subtasks.map((subtask) => {
@@ -273,21 +259,31 @@ export function PlanAddDialog({
                             <button
                               key={subtask.id}
                               type="button"
-                              className="rounded-xl px-3 py-2 text-left text-sm text-text hover:bg-cream"
+                              disabled={inPlan}
+                              className="rounded-xl px-3 py-2 text-left text-sm text-text hover:bg-cream disabled:cursor-default disabled:hover:bg-transparent"
                               onClick={() => {
                                 onAddExistingTask(task, subtask.id)
                                 onClose()
                               }}
                             >
                               {subtask.title}
-                              {inPlan ? (
-                                <span className="mt-0.5 block text-xs text-text-muted">
-                                  In today&apos;s plan
-                                </span>
-                              ) : null}
+                              <span className="mt-0.5 block text-xs text-text-muted">
+                                {inPlan ? "In today's plan" : "Add this subtask only"}
+                              </span>
                             </button>
                           )
                         })}
+                        <button
+                          type="button"
+                          disabled={wholeInPlan}
+                          className="mt-1 rounded-xl px-3 py-2 text-left text-xs font-medium text-text-muted hover:bg-cream hover:text-text disabled:cursor-default disabled:hover:bg-transparent"
+                          onClick={() => {
+                            onAddExistingTask(task)
+                            onClose()
+                          }}
+                        >
+                          {wholeInPlan ? "Whole task is in today's plan" : 'Add whole task'}
+                        </button>
                       </div>
                     ) : null}
                   </li>
