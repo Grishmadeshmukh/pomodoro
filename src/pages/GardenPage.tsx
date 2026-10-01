@@ -102,7 +102,7 @@ export function GardenPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <TomatoGarden tomatoCount={totalTomatoes} />
+      <TomatoGarden tomatoCount={totalTomatoes} focusMinutes={totalFocusMinutes} />
 
       <p className="text-center text-sm text-text-muted">
         {formatMinutes(totalFocusMinutes)} focused time

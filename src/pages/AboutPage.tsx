@@ -68,8 +68,8 @@ export function AboutPage() {
             every item in Today’s Plan to earn a Golden Tomato.
           </li>
           <li>
-            <strong>Watch the garden</strong> grow each hour. Weekends earn twice the tomatoes, so the garden
-            grows twice as fast.
+            <strong>Watch the garden</strong> grow with each hour you focus. Six hours
+            finishes one tree, and every tree you finish stays.
           </li>
         </ol>
       </section>
@@ -133,9 +133,9 @@ export function AboutPage() {
       <section className="overflow-hidden rounded-2xl bg-white px-4 pb-5 pt-5 text-center shadow-sm">
         <h3 className="text-lg font-semibold text-text">Hourly growth</h3>
         <p className="mt-2 text-sm text-text-muted">
-          Every 10 tomatoes replaces the same plant with the next stage, from
-          sprout to fruiting tree. A weekend hour is 20 tomatoes, so it skips
-          ahead two stages.
+          Each hour of focus advances the same plant one stage, from sprout to
+          fruiting tree. After six hours that tree stays, and the next hour
+          plants a new sapling.
         </p>
         <img
           src={GROWTH_IMAGE}
@@ -160,7 +160,7 @@ export function AboutPage() {
 
         <p className="mt-3 text-sm text-text-muted">
           {hours === 0
-            ? 'Empty soil — grow 10 tomatoes to plant a sapling.'
+            ? 'Empty soil — focus for an hour to plant a sapling.'
             : `${hours} ${hours === 1 ? 'hour' : 'hours'} preview`}
         </p>
 

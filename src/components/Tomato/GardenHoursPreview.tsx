@@ -1,4 +1,4 @@
-import { MAX_VISIBLE_HOUR_TREES } from '../../utils/gardenVisual'
+import { MAX_PREVIEW_HOURS } from '../../utils/gardenVisual'
 
 const PRESETS = [0, 1, 2, 3, 4, 5, 6, 7, 12, 18]
 
@@ -28,13 +28,13 @@ export function GardenHoursPreview({
         <input
           type="number"
           min={0}
-          max={MAX_VISIBLE_HOUR_TREES}
+          max={MAX_PREVIEW_HOURS}
           value={hours}
           onChange={(event) => {
             const next = Number(event.target.value)
             if (!Number.isFinite(next)) return
             onChange(
-              Math.min(MAX_VISIBLE_HOUR_TREES, Math.max(0, Math.floor(next))),
+              Math.min(MAX_PREVIEW_HOURS, Math.max(0, Math.floor(next))),
             )
           }}
           className="w-20 rounded-lg border border-cream-dark bg-white px-2 py-1 text-center text-base font-semibold text-text"

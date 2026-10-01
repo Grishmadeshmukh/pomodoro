@@ -1,7 +1,7 @@
 export const MINUTES_PER_HOUR_TREE = 60
-export const TOMATOES_PER_GARDEN_HOUR = 10
 export const HOUR_TREE_CYCLE = 6
-export const MAX_VISIBLE_HOUR_TREES = 18
+/** About-page preview only. The live garden shows every hour focused. */
+export const MAX_PREVIEW_HOURS = 180
 
 /** Positions and heights taken from `public/hourly growth.png` (trees + ground, no labels). */
 const HOUR_SLOTS = [
@@ -15,12 +15,6 @@ const HOUR_SLOTS = [
 
 export function completedFocusHours(focusMinutes: number): number {
   return Math.max(0, Math.floor(focusMinutes / MINUTES_PER_HOUR_TREE))
-}
-
-/** 10 tomatoes plant hour 1 (a sapling). Weekend 2× tomatoes advance the garden twice as far. */
-export function gardenHoursFromTomatoes(tomatoes: number): number {
-  if (!Number.isFinite(tomatoes) || tomatoes <= 0) return 0
-  return Math.floor(tomatoes / TOMATOES_PER_GARDEN_HOUR)
 }
 
 export interface PlantedHourTree {
@@ -55,9 +49,9 @@ function bedPositions(count: number): number[] {
   return Array.from({ length: count }, (_, index) => start + step * index)
 }
 
-/** Hours 1–6 replace the same plant’s stage; hour 7 keeps hour6 and plants a new sapling. */
+/** Hours 1–6 replace the same plant’s stage; hour 7 keeps that tree and plants a new sapling. */
 export function layoutHourTrees(focusMinutes: number): PlantedHourTree[] {
-  const hours = Math.min(completedFocusHours(focusMinutes), MAX_VISIBLE_HOUR_TREES)
+  const hours = completedFocusHours(focusMinutes)
   if (hours === 0) return []
 
   const matureCount = Math.floor(hours / HOUR_TREE_CYCLE)

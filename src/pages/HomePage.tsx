@@ -189,7 +189,7 @@ export function HomePage() {
         completedCount={completedCount}
         totalCount={resolved.length}
       />
-      <TomatoGarden tomatoCount={todayTomatoes} compact />
+      <TomatoGarden tomatoCount={todayTomatoes} focusMinutes={todayFocusMinutes} compact />
 
       <CompletedTaskDialog
         open={finishedTask !== null}

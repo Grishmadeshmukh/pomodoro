@@ -14,7 +14,7 @@ const NAV_ITEMS: { page: AppPage; label: string; src: string }[] = [
 
 export function Navigation({ currentPage, onNavigate }: NavigationProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-10 border-t border-cream-dark bg-white/90 backdrop-blur-sm">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-cream-dark bg-white">
       <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-3">
         {NAV_ITEMS.map(({ page, label, src }) => {
           const isActive = currentPage === page
