@@ -7,18 +7,13 @@ import {
 } from '../repositories/planRepository'
 import {
   addSavedRoutine,
-  removeSavedRoutine,
   updateSavedRoutine,
 } from '../repositories/savedRoutineRepository'
 import type { PlanItem, Task } from '../types'
 import { createRoutinePlanItem } from '../utils/createPlanItems'
 import { localDateKey } from '../utils/dateUtils'
 import type { RoutinePreset } from '../utils/defaultRoutine'
-import {
-  inferRoutineIcon,
-  isPermanentPlanItem,
-  isPermanentRoutine,
-} from '../utils/defaultRoutine'
+import { inferRoutineIcon, isPermanentRoutine } from '../utils/defaultRoutine'
 import { insertPlanItem, movePlanItem } from '../utils/planUtils'
 
 function todayKey(): string {
@@ -160,17 +155,7 @@ export function useTodayPlan() {
 
   const removeItem = useCallback(
     (id: string) => {
-      const removing = items.find((item) => item.id === id)
-      if (removing && isPermanentPlanItem(removing)) return
-      const remaining = items.filter((item) => item.id !== id)
-      persist(remaining)
-      if (
-        removing?.routineKey &&
-        !isPermanentRoutine(removing.routineKey) &&
-        !remaining.some((item) => item.routineKey === removing.routineKey)
-      ) {
-        removeSavedRoutine(removing.routineKey)
-      }
+      persist(items.filter((item) => item.id !== id))
     },
     [items, persist],
   )

@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { getSavedRoutines } from '../../repositories/savedRoutineRepository'
 import type { Task } from '../../types'
-import { ADDABLE_ROUTINES, type RoutinePreset } from '../../utils/defaultRoutine'
+import {
+  ADDABLE_ROUTINES,
+  PERMANENT_ROUTINES,
+  type RoutinePreset,
+} from '../../utils/defaultRoutine'
 import { RoutineIconImage } from './RoutineIconImage'
 
 type AddMode = 'choose' | 'new-task' | 'existing-task' | 'routine'
@@ -39,9 +43,12 @@ export function PlanAddDialog({
   const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string>>(new Set())
 
   const routineChoices = [
+    ...PERMANENT_ROUTINES,
     ...ADDABLE_ROUTINES,
     ...savedRoutines.filter(
-      (routine) => !ADDABLE_ROUTINES.some((preset) => preset.key === routine.key),
+      (routine) =>
+        !ADDABLE_ROUTINES.some((preset) => preset.key === routine.key) &&
+        !PERMANENT_ROUTINES.some((preset) => preset.key === routine.key),
     ),
   ]
 

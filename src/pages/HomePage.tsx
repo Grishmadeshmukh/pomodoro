@@ -11,7 +11,6 @@ import { TimerControls } from '../components/Timer/TimerControls'
 import { TimerDisplay } from '../components/Timer/TimerDisplay'
 import { Tomato } from '../components/Tomato/Tomato'
 import { TomatoCharacter } from '../components/Tomato/TomatoCharacter'
-import { TomatoCounter } from '../components/Tomato/TomatoCounter'
 import { TomatoGarden } from '../components/Tomato/TomatoGarden'
 import { useDailyProgress } from '../hooks/useDailyProgress'
 import { useFocusSessions } from '../hooks/useFocusSessions'
@@ -24,11 +23,7 @@ import { formatMinutes, formatTimer } from '../utils/dateUtils'
 import { getUpNextItem, resolvePlanItems } from '../utils/planUtils'
 import { sumTodayProgress } from '../utils/sessionHistory'
 import { calculateCurrentStreak } from '../utils/streakCalculations'
-import {
-  calculateTomatoes,
-  getRewardMultiplier,
-  isWeekend,
-} from '../utils/tomatoCalculations'
+import { calculateTomatoes, isWeekend } from '../utils/tomatoCalculations'
 
 export function HomePage() {
   const { tasks, saveTask, deleteTask, toggleTask, toggleSubtask } = useTasks()
@@ -56,7 +51,6 @@ export function HomePage() {
   const { holidayDates } = daily
   const streak = calculateCurrentStreak(sessions, holidayDates, now)
   const weekend = isWeekend(now)
-  const multiplier = getRewardMultiplier(now)
   const planComplete = resolved.length > 0 && completedCount === resolved.length
   const planWasComplete = useRef(planComplete)
 
@@ -183,7 +177,6 @@ export function HomePage() {
         }}
       />
 
-      <TomatoCounter tomatoes={todayTomatoes} goal={10} multiplier={multiplier} />
       <GoldenTomatoCard
         earned={planComplete}
         completedCount={completedCount}

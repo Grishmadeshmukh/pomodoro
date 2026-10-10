@@ -1,9 +1,6 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { PlanItem, ResolvedPlanItem, Task } from '../../types'
-import {
-  isPermanentPlanItem,
-  type RoutinePreset,
-} from '../../utils/defaultRoutine'
+import type { RoutinePreset } from '../../utils/defaultRoutine'
 import { EmptyState } from '../Common/EmptyState'
 import { TaskFormDialog } from '../Tasks/TaskFormDialog'
 import { PlanAddDialog } from './PlanAddDialog'
@@ -263,7 +260,6 @@ export function TodayPlan({
                     title={item.title}
                     completed={item.completed}
                     icon={item.icon}
-                    canRemove={!isPermanentPlanItem(source)}
                     onToggle={() => onToggleLocal(item.id)}
                     onEdit={() => setEditingLocal(source)}
                   />

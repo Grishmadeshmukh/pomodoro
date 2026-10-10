@@ -1,13 +1,11 @@
 import type { PlanItem } from '../types'
 import { loadItem, saveItem } from '../storage/localStorage'
-import { getSavedRoutines } from './savedRoutineRepository'
-import {
-  createDefaultRoutineItems,
-  ensurePermanentRoutines,
-} from '../utils/createPlanItems'
+import { addSavedRoutine } from './savedRoutineRepository'
+import { ADDABLE_ROUTINES, isPermanentRoutine } from '../utils/defaultRoutine'
 import { reindexPlanItems } from '../utils/planUtils'
 
 const PLAN_KEY = 'pomodoro.v2.planItems'
+const ROUTINES_RELEASED_KEY = 'pomodoro.v2.routinesStayInPicker'
 
 export const PLAN_CHANGED_EVENT = 'pomodoro:plan-changed'
 
@@ -68,36 +66,34 @@ export function syncLinkedTaskCompletion(date: string, tasks: LinkedTask[]): voi
   notifyPlanChanged()
 }
 
-export function getOrCreatePlan(date: string): PlanItem[] {
+/** Move routine rows out of today's plan once. Their presets stay in the add dialog. */
+function releaseRetainedRoutines(date: string): void {
+  if (loadItem<boolean>(ROUTINES_RELEASED_KEY, false)) return
   const store = loadStore()
-  const current = date in store ? store[date] : undefined
-  const next = current
-    ? ensurePermanentRoutines(date, current)
-    : createDefaultRoutineItems(date, getSavedRoutines())
-  const changed =
-    !current ||
-    next.length !== current.length ||
-    next.some(
-      (item, index) =>
-        item.routineKey !== current[index]?.routineKey ||
-        item.icon !== current[index]?.icon ||
-        item.title !== current[index]?.title,
-    )
-
-  if (changed) {
-    store[date] = next
+  const current = store[date]
+  if (current?.some((item) => item.kind === 'routine')) {
+    for (const item of current) {
+      if (item.kind !== 'routine' || !item.routineKey) continue
+      const title = item.title?.trim()
+      if (!title || isPermanentRoutine(item.routineKey)) continue
+      if (ADDABLE_ROUTINES.some((preset) => preset.key === item.routineKey)) continue
+      addSavedRoutine({ key: item.routineKey, title, icon: item.icon })
+    }
+    store[date] = reindexPlanItems(current.filter((item) => item.kind !== 'routine'))
     saveStore(store)
   }
+  saveItem(ROUTINES_RELEASED_KEY, true)
+}
 
-  return [...store[date]].sort((a, b) => a.order - b.order)
+export function getOrCreatePlan(date: string): PlanItem[] {
+  releaseRetainedRoutines(date)
+  const current = getStoredPlan(date)
+  return current ?? []
 }
 
 export function savePlanForDate(date: string, items: PlanItem[]): PlanItem[] {
   const store = loadStore()
-  const next = ensurePermanentRoutines(
-    date,
-    items.map((item) => ({ ...item, date })),
-  )
+  const next = reindexPlanItems(items.map((item) => ({ ...item, date })))
   store[date] = next
   saveStore(store)
   return next
