@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { getSavedRoutines } from '../../repositories/savedRoutineRepository'
+import { DATA_SYNCED_EVENT } from '../../sync/syncEngine'
 import type { Task } from '../../types'
 import {
   ADDABLE_ROUTINES,
@@ -65,6 +66,12 @@ export function PlanAddDialog({
     }
     if (!open && dialog.open) dialog.close()
   }, [open])
+
+  useEffect(() => {
+    const refresh = () => setSavedRoutines(getSavedRoutines())
+    window.addEventListener(DATA_SYNCED_EVENT, refresh)
+    return () => window.removeEventListener(DATA_SYNCED_EVENT, refresh)
+  }, [])
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()

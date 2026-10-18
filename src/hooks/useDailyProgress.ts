@@ -5,6 +5,7 @@ import {
   getHolidayDates,
   setHoliday,
 } from '../repositories/dailyProgressRepository'
+import { DATA_SYNCED_EVENT } from '../sync/syncEngine'
 import { localDateKey } from '../utils/dateUtils'
 import { GOLDEN_TOMATO_SETTLED_EVENT } from '../utils/goldenTomatoSettlement'
 
@@ -31,12 +32,20 @@ export function useDailyProgress(date = localDateKey(new Date())) {
   )
 
   useEffect(() => {
-    const refresh = () => {
+    const refreshGolden = () => {
       setFlags(getDailyFlags(date))
       setGoldenDates(getGoldenTomatoDates())
     }
-    window.addEventListener(GOLDEN_TOMATO_SETTLED_EVENT, refresh)
-    return () => window.removeEventListener(GOLDEN_TOMATO_SETTLED_EVENT, refresh)
+    const refreshSynced = () => {
+      refreshGolden()
+      setHolidayDates(getHolidayDates())
+    }
+    window.addEventListener(GOLDEN_TOMATO_SETTLED_EVENT, refreshGolden)
+    window.addEventListener(DATA_SYNCED_EVENT, refreshSynced)
+    return () => {
+      window.removeEventListener(GOLDEN_TOMATO_SETTLED_EVENT, refreshGolden)
+      window.removeEventListener(DATA_SYNCED_EVENT, refreshSynced)
+    }
   }, [date])
 
   return {

@@ -5,6 +5,7 @@ import {
   incrementAbandonCount,
 } from '../repositories/dailyProgressRepository'
 import { loadItem, removeItem, saveItem } from '../storage/localStorage'
+import { DATA_SYNCED_EVENT } from '../sync/syncEngine'
 import { localDateKey, snapDurationMs } from '../utils/dateUtils'
 import { calculateTomatoes } from '../utils/tomatoCalculations'
 import {
@@ -89,6 +90,13 @@ export function useTimer({ onSessionEnd }: UseTimerOptions = {}) {
   const [abandonCount, setAbandonCount] = useState(() =>
     getAbandonCount(localDateKey(new Date())),
   )
+
+  useEffect(() => {
+    const refresh = () => setAbandonCount(getAbandonCount(localDateKey(new Date())))
+    window.addEventListener(DATA_SYNCED_EVENT, refresh)
+    return () => window.removeEventListener(DATA_SYNCED_EVENT, refresh)
+  }, [])
+
   const timerRef = useRef(timer)
   const onSessionEndRef = useRef(onSessionEnd)
   const finishingRef = useRef(false)

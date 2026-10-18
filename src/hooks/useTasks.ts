@@ -10,6 +10,7 @@ import {
   upsertTask,
 } from '../repositories/taskRepository'
 import type { Task } from '../types'
+import { DATA_SYNCED_EVENT } from '../sync/syncEngine'
 import { hasOpenSubtasks, TASK_DELETE_AFTER_MS } from '../utils/taskCompletion'
 
 function sortTasks(tasks: Task[]): Task[] {
@@ -27,6 +28,12 @@ function orderAtStart(tasks: Task[], completed: boolean, exceptId: string): numb
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>(() => sortTasks(getTasks()))
+
+  useEffect(() => {
+    const refresh = () => setTasks(sortTasks(getTasks()))
+    window.addEventListener(DATA_SYNCED_EVENT, refresh)
+    return () => window.removeEventListener(DATA_SYNCED_EVENT, refresh)
+  }, [])
 
   const saveTask = useCallback((task: Task) => {
     setTasks(sortTasks(upsertTask(task)))

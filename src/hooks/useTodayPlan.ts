@@ -14,6 +14,7 @@ import { createRoutinePlanItem } from '../utils/createPlanItems'
 import { localDateKey } from '../utils/dateUtils'
 import type { RoutinePreset } from '../utils/defaultRoutine'
 import { inferRoutineIcon, isPermanentRoutine } from '../utils/defaultRoutine'
+import { DATA_SYNCED_EVENT } from '../sync/syncEngine'
 import { insertPlanItem, movePlanItem } from '../utils/planUtils'
 
 function todayKey(): string {
@@ -41,7 +42,11 @@ export function useTodayPlan() {
       setItems(next)
     }
     window.addEventListener(PLAN_CHANGED_EVENT, refresh)
-    return () => window.removeEventListener(PLAN_CHANGED_EVENT, refresh)
+    window.addEventListener(DATA_SYNCED_EVENT, refresh)
+    return () => {
+      window.removeEventListener(PLAN_CHANGED_EVENT, refresh)
+      window.removeEventListener(DATA_SYNCED_EVENT, refresh)
+    }
   }, [date])
 
   const addRoutine = useCallback(

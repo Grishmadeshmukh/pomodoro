@@ -1,3 +1,5 @@
+import { isHydrating, isSyncedStorageKey, recordSyncedSave } from '../sync/syncMeta'
+
 export function loadItem<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key)
@@ -9,7 +11,14 @@ export function loadItem<T>(key: string, fallback: T): T {
 }
 
 export function saveItem<T>(key: string, value: T): void {
-  localStorage.setItem(key, JSON.stringify(value))
+  const nextJson = JSON.stringify(value)
+  if (isHydrating() || !isSyncedStorageKey(key)) {
+    localStorage.setItem(key, nextJson)
+    return
+  }
+  const previousRaw = localStorage.getItem(key)
+  localStorage.setItem(key, nextJson)
+  recordSyncedSave(key, previousRaw, nextJson)
 }
 
 export function removeItem(key: string): void {
