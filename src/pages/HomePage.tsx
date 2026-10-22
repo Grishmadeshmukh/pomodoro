@@ -110,7 +110,11 @@ export function HomePage() {
     <div className="flex flex-col gap-8">
       <Confetti active={celebrate} />
       <TomatoSplash active={showSplash} />
-      <section className="flex flex-col items-center gap-5">
+      <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)] lg:items-start lg:gap-8">
+        <section
+          id="timer"
+          className="flex flex-col items-center gap-5 lg:rounded-2xl lg:bg-white lg:px-8 lg:py-8 lg:shadow-sm"
+        >
         <StatsBanner
           items={[
             {
@@ -149,40 +153,51 @@ export function HomePage() {
           onReset={timer.reset}
           onEnd={timer.end}
         />
-      </section>
+        </section>
 
-      <TodayPlan
-        items={plan.items}
-        resolved={resolved}
-        tasks={tasks}
-        upNextId={upNext?.id}
-        onAddRoutine={plan.addRoutine}
-        onAddCustomRoutine={plan.addCustomRoutine}
-        onAddTask={plan.addTask}
-        onAddSubtask={plan.addSubtask}
-        onCreateListedTask={(task, atIndex) => {
-          saveTask(task)
-          plan.addTask(task, atIndex)
-        }}
-        onCreatePlanOnlyTask={plan.addPlanOnlyTask}
-        onMoveItem={plan.moveItem}
-        onRemoveItem={plan.removeItem}
-        onToggleLocal={handleToggleLocal}
-        onRenameItem={plan.renameItem}
-        onToggleSubtask={toggleSubtask}
-        onSaveTask={saveTask}
-        onStartFocus={() => {
-          if (timer.status === 'idle') timer.start()
-          window.scrollTo({ top: 0, behavior: 'smooth' })
-        }}
-      />
+        <div className="flex flex-col gap-8 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+        <TodayPlan
+          items={plan.items}
+          resolved={resolved}
+          tasks={tasks}
+          upNextId={upNext?.id}
+          onAddRoutine={plan.addRoutine}
+          onAddCustomRoutine={plan.addCustomRoutine}
+          onAddTask={plan.addTask}
+          onAddSubtask={plan.addSubtask}
+          onCreateListedTask={(task, atIndex) => {
+            saveTask(task)
+            plan.addTask(task, atIndex)
+          }}
+          onCreatePlanOnlyTask={plan.addPlanOnlyTask}
+          onMoveItem={plan.moveItem}
+          onRemoveItem={plan.removeItem}
+          onToggleLocal={handleToggleLocal}
+          onRenameItem={plan.renameItem}
+          onToggleSubtask={toggleSubtask}
+          onSaveTask={saveTask}
+          onStartFocus={() => {
+            if (timer.status === 'idle') timer.start()
+            document.getElementById('timer')?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start',
+            })
+          }}
+        />
 
-      <GoldenTomatoCard
-        earned={planComplete}
-        completedCount={completedCount}
-        totalCount={resolved.length}
-      />
-      <TomatoGarden tomatoCount={todayTomatoes} focusMinutes={todayFocusMinutes} compact />
+        <GoldenTomatoCard
+          earned={planComplete}
+          completedCount={completedCount}
+          totalCount={resolved.length}
+        />
+        </div>
+
+        <TomatoGarden
+          tomatoCount={todayTomatoes}
+          focusMinutes={todayFocusMinutes}
+          compact
+        />
+      </div>
 
       <CompletedTaskDialog
         open={finishedTask !== null}

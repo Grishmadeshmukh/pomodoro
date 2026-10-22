@@ -29,7 +29,7 @@ function HeaderAuth() {
       <button
         type="button"
         onClick={() => void signInWithGoogle()}
-        className="mt-2 text-sm font-medium text-tomato hover:text-tomato-dark"
+        className="mt-2 text-sm font-medium text-tomato hover:text-tomato-dark lg:mt-0"
       >
         Sign in with Google
       </button>
@@ -37,8 +37,8 @@ function HeaderAuth() {
   }
 
   return (
-    <div className="mt-2">
-      <p className="flex items-center justify-center gap-3 text-sm">
+    <div className="mt-2 lg:mt-0">
+      <p className="flex items-center justify-center gap-3 text-sm lg:justify-end">
         <span className="max-w-48 truncate font-medium text-text">{googleDisplayName(session)}</span>
         <button
           type="button"
@@ -67,8 +67,8 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
   const onAbout = currentPage === 'about'
 
   return (
-    <div className="mx-auto min-h-screen max-w-lg pb-24">
-      <header className="px-6 pt-8 pb-4 text-center">
+    <div className="mx-auto min-h-screen max-w-lg pb-24 lg:max-w-6xl lg:pb-10">
+      <header className="px-6 pt-8 pb-4 text-center lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center lg:gap-4 lg:px-6 lg:pt-6 lg:pb-6 lg:text-left">
         <h1 className="text-2xl font-bold tracking-tight text-text">
           <button
             type="button"
@@ -83,10 +83,19 @@ export function Layout({ currentPage, onNavigate, children }: LayoutProps) {
             <Tomato size={28} className="inline-block align-middle" alt="" />
           </button>
         </h1>
-        <HeaderAuth />
+        <div className="hidden lg:flex lg:justify-center">
+          <Navigation currentPage={currentPage} onNavigate={onNavigate} variant="top" />
+        </div>
+        <div className="lg:justify-self-end">
+          <HeaderAuth />
+        </div>
       </header>
-      <main className="px-6">{children}</main>
-      <Navigation currentPage={currentPage} onNavigate={onNavigate} />
+      <main className={`px-6 ${currentPage === 'home' ? '' : 'lg:mx-auto lg:max-w-3xl'}`}>
+        {children}
+      </main>
+      <div className="lg:hidden">
+        <Navigation currentPage={currentPage} onNavigate={onNavigate} />
+      </div>
     </div>
   )
 }
